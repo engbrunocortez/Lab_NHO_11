@@ -1,0 +1,1413 @@
+<title>Laboratório de Iluminação NHO 11</title>
+<meta name="description" content="Simulador didático de avaliação dos níveis de iluminamento em ambientes internos de trabalho conforme a NHO 11 (Fundacentro), com luxímetros Instrutherm LDR-225, LD-550 e LD-400.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&family=Share+Tech+Mono&display=swap">
+<style>
+/* Layout: barra de título + coluna de glossário à esquerda + bancada de trabalho em etapas (planta da sala ao lado do luxímetro virtual) */
+:root{
+  --bg:#eaeef2; --surface:#ffffff; --surface-2:#f4f6f9; --ink:#16202b; --muted:#566373; --line:#d2d9e1;
+  --accent:#e3a300; --accent-ink:#8a5b00; --accent-soft:#fff3cf;
+  --ok:#1d7f48; --ok-soft:#e1f3e8; --warn:#a8670c; --warn-soft:#fdf0d9; --bad:#b8352a; --bad-soft:#fbe4e1;
+  --floor:#f8f9fb; --wall:#3b4654; --window:#3d8bd1; --furn:#dfe4ea;
+  --g-r:#d48f00; --g-q:#2f6fb5; --g-t:#16867a; --g-p:#7b4fb0; --g-task:#c2410c; --g-ent:#8a6d3b;
+  --lcd-bg:#c5d3b0; --lcd-ink:#18230f; --lcd-dim:rgba(24,35,15,.16);
+  --f-display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+  --f-lcd:"Share Tech Mono","JetBrains Mono",ui-monospace,monospace;
+  --r:8px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141a; --surface:#171e27; --surface-2:#1d2631; --ink:#e4e9ef; --muted:#97a3b1; --line:#2b3644;
+  --accent:#f0b72a; --accent-ink:#f3c552; --accent-soft:#3a2f12;
+  --ok:#43c07c; --ok-soft:#14301f; --warn:#e3a54b; --warn-soft:#352813; --bad:#f07466; --bad-soft:#3a1a17;
+  --floor:#131a22; --wall:#9aa7b6; --window:#5aa6ea; --furn:#26313d;
+  --g-r:#f0b72a; --g-q:#6aa5ea; --g-t:#3cc2b2; --g-p:#b28ae6; --g-task:#ff8a4c; --g-ent:#cfae73;
+  color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --surface:#171e27; --surface-2:#1d2631; --ink:#e4e9ef; --muted:#97a3b1; --line:#2b3644;
+  --accent:#f0b72a; --accent-ink:#f3c552; --accent-soft:#3a2f12;
+  --ok:#43c07c; --ok-soft:#14301f; --warn:#e3a54b; --warn-soft:#352813; --bad:#f07466; --bad-soft:#3a1a17;
+  --floor:#131a22; --wall:#9aa7b6; --window:#5aa6ea; --furn:#26313d;
+  --g-r:#f0b72a; --g-q:#6aa5ea; --g-t:#3cc2b2; --g-p:#b28ae6; --g-task:#ff8a4c; --g-ent:#cfae73;
+  color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;letter-spacing:.01em;text-wrap:balance;margin:0}
+h2{font-size:1.65rem;line-height:1.15}
+h3{font-size:1.2rem}
+p{margin:0}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.eyebrow{font-family:var(--f-display);font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-ink);font-weight:600}
+
+/* topo */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;padding:14px 20px;border-bottom:1px solid var(--line);background:var(--surface)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand svg{flex:none}
+.brand h1{font-size:1.55rem;line-height:1}
+.brand .sub{font-size:.85rem;color:var(--muted)}
+.top .spacer{flex:1}
+.chipline{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+.chip b{font-weight:600}
+
+/* estrutura */
+.shell{display:grid;grid-template-columns:290px minmax(0,1fr);gap:0;min-height:calc(100vh - 70px)}
+aside.glos{border-right:1px solid var(--line);background:var(--surface);padding:18px 16px 40px;overflow:auto;max-height:calc(100vh - 70px);position:sticky;top:env(safe-area-inset-top,0px)}
+main{padding:18px 22px 60px;min-width:0}
+@media (max-width:980px){.shell{grid-template-columns:minmax(0,1fr)}main{padding:16px 16px 48px}aside.glos{position:static;max-height:none;border-right:0;border-top:1px solid var(--line);order:2}}
+.glos h2{font-size:1.25rem;margin-bottom:4px}
+.glos input{width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);margin:8px 0 12px}
+.glos details{border-bottom:1px solid var(--line);padding:7px 0}
+.glos summary{cursor:pointer;font-weight:600;font-size:.93rem;list-style:none;display:flex;justify-content:space-between;gap:8px}
+.glos summary::after{content:"+";color:var(--muted);font-family:var(--f-mono)}
+.glos details[open] summary::after{content:"–"}
+.glos details p{font-size:.88rem;color:var(--muted);margin-top:5px}
+.glos .ref{font-size:.75rem;font-family:var(--f-mono);color:var(--accent-ink)}
+.glos .group{margin-top:16px;font-family:var(--f-display);text-transform:uppercase;letter-spacing:.1em;font-size:.78rem;color:var(--muted)}
+
+/* etapas */
+.steps{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin-bottom:20px;scrollbar-width:thin}
+.steps button{flex:none;display:flex;align-items:baseline;gap:7px;border:0;background:none;padding:10px 12px 9px;border-bottom:3px solid transparent;cursor:pointer;color:var(--muted);font-family:var(--f-display);font-size:1.05rem;font-weight:600;letter-spacing:.02em}
+.steps button .n{font-family:var(--f-mono);font-size:.78rem}
+.steps button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.steps button .st{width:8px;height:8px;border-radius:50%;background:var(--line);align-self:center}
+.steps button .st.done{background:var(--ok)}
+.panel{display:grid;gap:18px}
+.lead{max-width:72ch;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);padding:7px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:.92rem}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#1b1300}
+.btn.small{padding:4px 10px;font-size:.82rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+label.f{display:grid;gap:4px;font-size:.85rem;color:var(--muted);min-width:0}
+label.f select{width:100%;min-width:0}
+select,input[type=text]{padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);max-width:100%}
+.note{font-size:.85rem;color:var(--muted)}
+.msg{padding:10px 12px;border-radius:6px;font-size:.9rem;border:1px solid transparent}
+.msg.ok{background:var(--ok-soft);border-color:var(--ok);color:var(--ink)}
+.msg.bad{background:var(--bad-soft);border-color:var(--bad);color:var(--ink)}
+.msg.warn{background:var(--warn-soft);border-color:var(--warn);color:var(--ink)}
+.pill{display:inline-block;font-size:.75rem;font-weight:700;padding:1px 8px;border-radius:999px;letter-spacing:.03em;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.na{background:var(--surface-2);color:var(--muted)}
+
+/* cenários */
+.scen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:12px}
+.scen{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:0;cursor:pointer;display:flex;flex-direction:column;overflow:hidden}
+.scen:hover{border-color:var(--accent)}
+.scen[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.scen svg{display:block;width:100%;height:auto;background:var(--floor);border-bottom:1px solid var(--line)}
+.scen .t{padding:10px 12px 12px;display:grid;gap:4px}
+.scen .t b{font-family:var(--f-display);font-size:1.15rem;font-weight:600}
+.scen .t span{font-size:.82rem;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 18px}
+.fact{display:grid;gap:1px}
+.fact span{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.fact b{font-weight:600}
+ul.obs{margin:6px 0 0;padding-left:18px;display:grid;gap:5px}
+ul.obs li{font-size:.93rem}
+
+/* tabelas */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-weight:600;background:var(--surface-2);font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+td.num,th.num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+
+/* instrumentos */
+.inst-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px}
+.inst{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:14px;display:grid;gap:10px;align-content:start;cursor:pointer;text-align:left}
+.inst[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.inst h3{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.inst ul{margin:0;padding-left:17px;font-size:.86rem;display:grid;gap:3px}
+.cert{font-size:.84rem;border-top:1px dashed var(--line);padding-top:8px;display:grid;gap:2px}
+
+/* bancada */
+.bench{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:16px;align-items:start}
+@media (max-width:1180px){.bench{grid-template-columns:1fr}}
+.plan-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;min-width:0}
+.plan-wrap svg{width:100%;height:auto;display:block;touch-action:manipulation}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.pt{cursor:pointer}
+.pt circle.ring{fill:var(--surface);stroke-width:2.2}
+.pt.done circle.ring{stroke-width:0}
+.pt text{font-family:var(--f-mono);font-size:10px;pointer-events:none}
+.pt:hover circle.ring{stroke-width:3.4}
+.sensor{pointer-events:none}
+
+/* luxímetro */
+.meter-col{display:grid;gap:12px}
+.meter{border-radius:18px;padding:16px 16px 18px;display:grid;gap:12px;color:#eef1f4;position:relative}
+.meter.m-ldr225{background:linear-gradient(160deg,#2c3540,#1b222b);border:2px solid #e3a300}
+.meter.m-ld550{background:linear-gradient(160deg,#36506b,#223448);border:2px solid #7d9bbb}
+.meter.m-ld400{background:linear-gradient(160deg,#363c43,#22272d);border:5px solid #e0742a}
+.meter .mtop{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--f-display);letter-spacing:.06em}
+.meter .mtop b{font-size:1.2rem}
+.meter .mtop span{font-size:.75rem;opacity:.75;text-transform:uppercase}
+.lcd{background:var(--lcd-bg);color:var(--lcd-ink);border-radius:8px;padding:8px 12px 10px;box-shadow:inset 0 2px 6px rgba(0,0,0,.35);font-family:var(--f-lcd);position:relative;min-height:112px}
+.lcd .ann{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:.72rem;letter-spacing:.06em}
+.lcd .ann span{opacity:.12}
+.lcd .ann span.on{opacity:1}
+.lcd .digits{font-size:3.1rem;line-height:1.05;text-align:right;font-variant-numeric:tabular-nums;letter-spacing:.04em;white-space:nowrap;overflow:hidden}
+.lcd .digits small{font-size:1rem;margin-left:6px}
+.lcd .bar{height:6px;background:var(--lcd-dim);border-radius:2px;overflow:hidden;margin-top:4px}
+.lcd .bar i{display:block;height:100%;background:var(--lcd-ink);width:0}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.key{border:0;border-radius:9px;padding:9px 4px 8px;background:#3d4955;color:#f4f6f8;font-family:var(--f-display);font-weight:600;letter-spacing:.05em;font-size:.88rem;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.4)}
+.key:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.4)}
+.key.pwr{background:#b8352a}
+.key.rec{background:#c58a00;color:#1b1300}
+.key:disabled{opacity:.3;cursor:not-allowed}
+.photocell{display:flex;align-items:center;gap:10px;font-size:.78rem;opacity:.85}
+.photocell .dome{width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#ffffff,#d9dde2 45%,#8b939c);border:3px solid #111;flex:none}
+.meter .disclaim{font-size:.7rem;opacity:.6}
+.ctrls{display:grid;gap:10px}
+.ctrls .row label.f{flex:1 1 200px}
+.memlist{font-family:var(--f-mono);font-size:.78rem;max-height:120px;overflow:auto;color:var(--muted)}
+.where{font-size:.9rem}
+.where b{font-family:var(--f-mono)}
+
+/* preliminar */
+.chk{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 14px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.chk:last-child{border-bottom:0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:5px 11px;cursor:pointer;font-size:.85rem;font-weight:600;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#1b1300}
+.chk .fb{grid-column:1/-1;font-size:.82rem}
+
+/* resultados */
+.formula{font-family:var(--f-mono);font-size:.9rem;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:10px 12px;overflow-x:auto;white-space:pre}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;background:var(--surface)}
+.kpi span{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.kpi b{font-family:var(--f-mono);font-size:1.35rem;font-weight:600}
+.report{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;max-width:900px}
+.report h3{margin-top:18px;font-size:1.15rem;border-bottom:1px solid var(--line);padding-bottom:3px}
+.report h3:first-of-type{margin-top:6px}
+.report p,.report li{font-size:.93rem;max-width:80ch}
+.report ul{padding-left:18px;margin:6px 0}
+.report .tbl-wrap{margin:8px 0}
+.flag-list{display:grid;gap:6px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="top">
+  <div class="brand">
+    <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="none" stroke="var(--accent)" stroke-width="2.5"/><circle cx="20" cy="20" r="8" fill="var(--accent)"/><g stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><path d="M20 3v5M20 32v5M3 20h5M32 20h5M8 8l3.5 3.5M28.5 28.5L32 32M8 32l3.5-3.5M28.5 11.5L32 8"/></g></svg>
+    <div>
+      <h1>Laboratório de Iluminação</h1>
+      <div class="sub">Níveis de iluminamento em ambientes internos de trabalho · NHO 11 (Fundacentro, 2018)</div>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <div class="chipline" id="statusChips"></div>
+</header>
+
+<div class="shell">
+  <aside class="glos" aria-label="Glossário">
+    <div class="eyebrow">Consulta rápida</div>
+    <h2>Glossário da NHO 11</h2>
+    <input type="text" id="glosSearch" placeholder="Buscar termo…" aria-label="Buscar no glossário">
+    <div id="glosList"></div>
+  </aside>
+
+  <main>
+    <nav class="steps" role="tablist" id="steps"></nav>
+    <section id="view" class="panel"></section>
+  </main>
+</div>
+<script>
+"use strict";
+/* ============================================================
+   DADOS DA NHO 11 (Fundacentro, 2018)
+   ============================================================ */
+const ESCALA = [20,30,50,75,100,150,200,300,500,750,1000,1500,2000,3000,5000];
+
+// Recorte do Quadro 1 (valores transcritos da NHO 11)
+const QUADRO = {
+  ger_circ:   {g:"1. Áreas gerais da edificação", n:"Área de circulação e corredor", E:100, IRC:40, obs:"Nas entradas e saídas, estabelecer zona de transição."},
+  ger_dep:    {g:"1. Áreas gerais da edificação", n:"Depósito, estoque e câmara fria", E:100, IRC:60, obs:"200 lux se forem continuamente ocupados."},
+  ger_exp:    {g:"1. Áreas gerais da edificação", n:"Expedição", E:300, IRC:60},
+  ger_ref:    {g:"1. Áreas gerais da edificação", n:"Refeitório e cantina", E:200, IRC:80},
+  ger_enf:    {g:"1. Áreas gerais da edificação", n:"Enfermaria", E:500, IRC:80},
+  qui_proc:   {g:"6. Indústrias de borracha, plástica e química", n:"Instalação de processamento com trabalho manual constante", E:300, IRC:80},
+  qui_lab:    {g:"6. Indústrias de borracha, plástica e química", n:"Metrologias e laboratórios", E:500, IRC:80},
+  qui_cor:    {g:"6. Indústrias de borracha, plástica e química", n:"Inspeção de cor", E:1000, IRC:90, tcp:6500, obs:"Tcp mínimo de 6.500 K."},
+  ele_mmed:   {g:"7. Indústrias de elétrica", n:"Montagem média (ex.: quadros de distribuição)", E:500, IRC:80},
+  ele_ofi:    {g:"7. Indústrias de elétrica", n:"Oficina eletrônica, ensaio e ajuste", E:1500, IRC:80},
+  met_forj:   {g:"14. Trabalho e processamento em metal", n:"Forjamento de molde aberto", E:200, IRC:60},
+  met_usin:   {g:"14. Trabalho e processamento em metal", n:"Usinagem grosseira e média (tolerâncias > 0,1 mm)", E:300, IRC:60},
+  met_retif:  {g:"14. Trabalho e processamento em metal", n:"Usinagem de precisão: retificação", E:500, IRC:60},
+  met_ferr:   {g:"14. Trabalho e processamento em metal", n:"Ferramentaria e fabricação de equipamentos de corte", E:750, IRC:60},
+  met_mfina:  {g:"14. Trabalho e processamento em metal", n:"Montagem fina", E:500, IRC:80},
+  sub_maq:    {g:"16. Subestações", n:"Sala de máquinas", E:200, IRC:80},
+  sub_ctrl:   {g:"16. Subestações", n:"Sala de controle", E:500, IRC:80, obs:"Painéis de controle frequentemente na vertical; dimerização pode ser necessária; vide nota 2."},
+  esc_arq:    {g:"22. Escritórios", n:"Arquivamento, cópia, circulação etc.", E:300, IRC:80},
+  esc_esc:    {g:"22. Escritórios", n:"Escrever, teclar, ler e processar dados", E:500, IRC:80, obs:"Vide nota 2 (monitores de vídeo)."},
+  esc_des:    {g:"22. Escritórios", n:"Desenho técnico", E:750, IRC:80},
+  esc_cad:    {g:"22. Escritórios", n:"Estação de projeto assistido por computador", E:500, IRC:80},
+  esc_reu:    {g:"22. Escritórios", n:"Sala de reunião e conferência", E:500, IRC:80, obs:"Recomenda-se que a iluminação seja controlável."},
+  esc_rec:    {g:"22. Escritórios", n:"Recepção", E:300, IRC:80},
+  edu_aula:   {g:"28. Construções educacionais", n:"Sala de aulas e sala de aulas particulares", E:300, IRC:80},
+  edu_not:    {g:"28. Construções educacionais", n:"Sala de aulas noturnas, classes e educação de adultos", E:500, IRC:80},
+  edu_quad:   {g:"28. Construções educacionais", n:"Quadro negro", E:500, IRC:80, obs:"Prevenir reflexões especulares."},
+  edu_leit:   {g:"28. Construções educacionais", n:"Sala de leitura", E:500, IRC:80}
+};
+
+const GLOSS = [
+  ["Definições (item 4)", [
+    ["Ângulo de corte","Medido a partir do plano horizontal, abaixo do qual a lâmpada – ou mais de uma lâmpada – é protegida pela luminária da visão direta do observador.","4"],
+    ["Aparência da cor","Refere-se à cor aparente (cromaticidade da lâmpada) da luz que a lâmpada emite. Pode ser descrita pela sua temperatura de cor correlata (Tcp).","4"],
+    ["Área adjacente","Área próxima à de trabalho, a partir da região definida como entorno imediato.","4"],
+    ["Área da tarefa","Área parcial em um local de trabalho no qual determinada tarefa visual é realizada, podendo estar contida em um plano horizontal, vertical ou inclinado.","4"],
+    ["Área de trabalho","Combinação das diversas áreas das tarefas realizadas em um mesmo ambiente, que pode envolver tarefas visuais diferentes, implicando ou não diferentes níveis de iluminação.","4"],
+    ["Entorno imediato","Zona de no mínimo 0,5 m de largura ao redor da área da tarefa, dentro do campo de visão.","4"],
+    ["Iluminância","Razão do fluxo luminoso incidente em um elemento de superfície que contém o ponto dado e a área desse elemento. Unidade: lux (lm·m⁻²).","4"],
+    ["Índice geral de reprodução de cor (IRC/Ra)","Relação entre a cor real de um objeto ou superfície e a aparência percebida diante de uma fonte luminosa. Varia de 0 a 100 e mede a fidelidade de cor que a iluminação reproduz nos objetos.","4"],
+    ["Luminância","Razão entre a intensidade do fluxo luminoso emitido por uma superfície em uma dada direção e a área dessa superfície projetada ortogonalmente sobre um plano perpendicular àquela direção.","4"],
+    ["Nível de iluminamento mínimo (E)","Valor abaixo do qual não convém que a iluminância de uma tarefa específica, um ambiente ou uma atividade de trabalho seja reduzida. Unidade: lux.","4"],
+    ["Refletância","Para uma determinada radiação incidente, é a razão do fluxo luminoso refletido para o fluxo incidente.","4"],
+    ["Reflexão veladora","Ofuscamento refletido: reflexões especulares que aparecem sobre o objeto observado e o mascaram total ou parcialmente pela diminuição do contraste.","4"],
+    ["Tarefa visual","Todos os elementos visuais da tarefa a ser realizada.","4"],
+    ["Temperatura de cor correlata (Tcp)","Temperatura do corpo negro cuja cor percebida se assemelha o mais próximo possível àquela do estímulo dado de mesma luminosidade. Unidade: K.","4"]
+  ]],
+  ["Avaliação preliminar (Anexo 2)", [
+    ["Cintilação (flicker)","Variações de brilho aparente ou de cor de uma fonte luminosa percebidas visualmente. Pode provocar fadiga, dor de cabeça e incômodo visual; pode resultar de flutuações de tensão causadas por cargas variáveis de grande porte (fornos a arco, máquinas de solda, motores).","A2"],
+    ["Efeito estroboscópico","Ocorre quando uma fonte de luz pulsante ilumina um objeto em movimento, podendo modificar a percepção do movimento ou provocar a imobilização aparente de partes rotativas.","A2"],
+    ["Ofuscamento","Desconforto ou redução da capacidade de distinguir detalhes devido a distribuição desfavorável das luminâncias, contraste excessivo ou reflexões em superfícies especulares. Pode ser desconfortável, inabilitador ou refletido.","A2"],
+    ["Zona de transição","Região criada para evitar diferenças bruscas de iluminamento entre ambientes internos e externos, onde há movimentação frequente.","A2"],
+    ["Aparência da cor (Quadro A1)","Quente: abaixo de 3.300 K. Intermediária: 3.300 a 5.300 K. Fria: acima de 5.300 K. Cores frias são recomendadas para escritórios e salas de aula.","A1"]
+  ]],
+  ["Critério de avaliação (item 5)", [
+    ["Tolerância","É permitida uma tolerância de 10% abaixo do valor de E do Quadro 1 na medição ponto a ponto da tarefa.","5"],
+    ["Regra dos 70%","A iluminância medida ponto a ponto na área da tarefa não deve ser inferior a 70% da iluminância média do ambiente (Anexo 1), mesmo que o Quadro 1 recomende valor menor.","5"],
+    ["Tarefas contínuas","Em áreas nas quais são realizadas tarefas de forma contínua, a iluminância não pode ser inferior a 200 lux.","5"],
+    ["Razão 5:1","A razão entre o maior valor medido na área da tarefa e a iluminância média do ambiente não deve superar 5:1 (não se aplica acima de 2.500 lux). A razão entre médias de áreas de trabalho adjacentes também não deve superar 5:1.","5"],
+    ["Tabela 1 – entorno imediato","Com iluminação suplementar: tarefa ≥ 750 lux → entorno 500 lux; 500 → 300; 300 → 200; ≤ 200 → mesma iluminância da tarefa.","5"],
+    ["Escala de iluminância (5.1)","20 – 30 – 50 – 75 – 100 – 150 – 200 – 300 – 500 – 750 – 1.000 – 1.500 – 2.000 – 3.000 – 5.000 lux. Aumentar ao menos um nível em trabalho visual crítico, capacidade visual abaixo do normal ou contraste excepcionalmente baixo; reduzir um nível (com justificativa técnica) para detalhes excepcionalmente grandes ou de alto contraste.","5.1"]
+  ]],
+  ["Procedimento (itens 6.2 a 6.4)", [
+    ["Luz natural","Com interferência de iluminação externa, medir sob as condições mais desfavoráveis (por exemplo, dias nublados), de modo que o iluminamento dependa somente das fontes instaladas.","6.2"],
+    ["Postura do avaliador","Evitar roupas claras e posicionar-se de modo a não causar sombras e reflexões sobre a fotocélula.","6.2"],
+    ["Atividades noturnas","Quando existirem atividades noturnas no ambiente, as medições deverão ser realizadas nesse período.","6.2"],
+    ["Medidor de iluminância","Fotocélula corrigida para a sensibilidade do olho humano e para o ângulo de incidência, com especificação do fabricante que permita medir conforme o tipo de lâmpada (LED, fluorescente, vapor de sódio).","6.3.1"],
+    ["Calibração","Periódica, certificada pelo Inmetro ou por laboratório acreditado; refazer sempre que houver suspeita de dano.","6.3.2"],
+    ["Tempo de estabilização","Observar o tempo de estabilização do medidor ao ligá-lo, na primeira leitura e sempre que o sensor for exposto a iluminação sensivelmente diferente da anterior.","6.4"],
+    ["Plano de medição","Leitura no plano da tarefa visual (horizontal, vertical ou inclinado) ou, quando não definido, a 0,75 m do piso. No Anexo 1, fotocélula em plano horizontal a 0,75 m.","6.4 / A1"]
+  ]]
+];
+
+// Quadro A3 – lista de verificação
+const A3 = [
+  ["a1","As áreas de trabalho e as partes de equipamentos estão bem iluminadas de modo a permitir aos trabalhadores a percepção de possíveis riscos ou perigos visíveis?"],
+  ["a2","O sistema de iluminação permite boa visualização da sinalização de segurança?"],
+  ["a3","Os trabalhadores conseguem visualizar suas tarefas sem dificuldade?"],
+  ["a4","Verificou-se a necessidade de iluminação específica ou suplementar?"],
+  ["a5","O sistema de iluminação atende às necessidades dos trabalhadores mais idosos?"],
+  ["a6","Foi realizado ajuste no sistema de iluminação para atender os trabalhadores com limitações visuais?"],
+  ["a7","As áreas de trabalho estão livres de sombras?"],
+  ["a8","O ambiente de trabalho está livre de efeito estroboscópico?"],
+  ["a9","Os locais de trabalho estão livres de cintilações perceptíveis?"],
+  ["a10","Para tarefas que exigem iluminação específica, existe o ajuste de intensidade?"],
+  ["a11","As superfícies de trabalho, incluindo telas ou monitores, estão livres de ofuscamento?"],
+  ["a12","Os trabalhadores dispõem de tempo suficiente para realizar suas tarefas visuais?"],
+  ["a13","O contraste na iluminação entre as áreas de trabalho e adjacentes está adequado?"],
+  ["a14","Os sistemas de iluminação e as superfícies das áreas de trabalho são limpos regularmente?"],
+  ["a15","As lâmpadas com algum problema são substituídas de imediato?"],
+  ["a16","Os sistemas de iluminação de emergência estão operando de forma adequada?"],
+  ["a17","Os trabalhadores foram orientados a relatar irregularidades no sistema de iluminação que possam ocasionar acidentes, problemas na atividade ou na produção?"],
+  ["a18","Existem medições regulares dos níveis de iluminância?"]
+];
+
+// Quadro A2 – recomendações
+const A2 = {
+  insuf:{t:"Iluminação insuficiente na tarefa", r:["Substituição de lâmpadas queimadas ou defeituosas","Limpeza de luminárias e lâmpadas","Uso de cores mais claras na decoração do local","Remoção de objetos que bloqueiem a iluminação","Redução do espaçamento das luminárias ou uso de lâmpadas de maior fluxo luminoso","Fornecimento de iluminação suplementar","Mudança da tarefa para outro local"]},
+  irreg:{t:"Iluminação irregular ou não uniforme do ambiente de trabalho", r:["Substituição de lâmpadas queimadas ou defeituosas","Limpeza de luminárias e lâmpadas","Redução do espaçamento das luminárias","Substituição de luminárias para distribuição mais uniforme, sem causar ofuscamento","Aumento da refletância das superfícies da sala"]},
+  estrob:{t:"Efeito estroboscópico", r:["Instalação de fontes adjacentes alimentadas por diferentes fases do sistema elétrico","Utilização de fontes de alta frequência, como reatores de alta frequência","Substituição do tipo de iluminação"]},
+  cint:{t:"Cintilação", r:["Verificação de deficiências no circuito elétrico de alimentação","Substituição de lâmpadas com tempo de uso próximo ao fim da vida útil","Utilização de fontes de alta frequência, como reatores de alta frequência"]},
+  ofusc:{t:"Contraste reduzido da tarefa devido a reflexões veladoras / brilho excessivo", r:["Alteração das características da superfície de trabalho (brilhante/fosco)","Troca de local da estação de trabalho ou reposicionamento da área de tarefa","Deslocamento das fontes luminosas que geram as reflexões veladoras","Uso de painéis de difusão"]},
+  luznat:{t:"Iluminação excessiva ocasionada por luz natural", r:["Uso de bloqueios parciais ou totais (cortinas, persianas) em janelas, claraboias e portas","Alteração na refletância das superfícies do local de trabalho","Mudança do local ou do posicionamento da tarefa"]},
+  cor:{t:"Aparência de cor / reprodução de cor inadequada", r:["Substituição das lâmpadas por outras com temperatura de cor e IRC adequados ao tipo de ambiente e de tarefa"]}
+};
+
+const LAMP_LABEL = {LED:"LED", FLU:"Fluorescente", SOD:"Vapor de sódio", MET:"Vapor metálico / mercúrio", PAD:"Padrão (incandescente 2.856 K)"};
+
+/* ============================================================
+   INSTRUMENTOS (especificações publicadas pela Instrutherm)
+   ============================================================ */
+const INSTR = {
+  LDR225:{nome:"LDR-225", cls:"m-ldr225", sub:"Luxímetro digital com datalogger",
+    specs:["Indicado pelo fabricante para medições conforme a NHO 11","Fotocélula corrigida para a sensibilidade do olho humano e o ângulo de incidência","Mede LED e todas as luzes visíveis, com fator de correção de lâmpada selecionável","Precisão: ±3% da leitura ±5 dígitos (calibrado com lâmpada padrão de 2.856 K)","Resposta de cosseno f'2 = 2%; linearidade ≤ 2%","Data-hold, memória manual ou automática, comunicação com PC"],
+    ranges:null, autoR:true, lampSel:true, led:true, mem:true, sd:0.010, sel:["PAD","LED","FLU","SOD","MET"]},
+  LD550:{nome:"LD-550", cls:"m-ld550", sub:"Luxímetro digital para LED",
+    specs:["Para luminárias LED de luz branca, fluorescentes, vapor de sódio e incandescentes","Escalas: 40 – 400 – 4.000 – 40.000 – 400.000 lux (display de 4.000 contagens)","Fonte de luz selecionável; resposta espectral próxima à curva CIE","Desvio angular (cosseno): 30° ±2%, 60° ±6%, 80° ±25%","Memória de 99 medições; registro de máximo, mínimo e médio","Taxa de amostragem: 2,5 leituras por segundo"],
+    ranges:[40,400,4000,40000,400000], counts:4000, autoR:false, lampSel:true, led:true, mem:true, sd:0.015, sel:["PAD","LED","FLU","SOD","MET"]},
+  LD400:{nome:"LD-400", cls:"m-ld400", sub:"Luxímetro digital com fotocélula em cabo espiral",
+    specs:["Fotocélula corrigida para o olho humano e o ângulo de incidência (resposta CIE)","Tipo de luz medida: todas as luzes visíveis, EXCETO LED","Escalas: 200 – 2.000 – 20.000 – 200.000 lux (display de 1.999 contagens)","Precisão: ±(7% + 10 dígitos); calibrado com lâmpada padrão de 2.856 K","Funções máximo/mínimo, hold e seleção lux/fc; sem memória interna","Cabo espiral extensível até 1 m"],
+    ranges:[200,2000,20000,200000], counts:1999, autoR:false, lampSel:false, led:false, mem:false, sd:0.022, sel:["PAD"]}
+};
+
+/* ============================================================
+   CENÁRIOS
+   janelas: N (y=0), S (y=W), O (x=0), L (x=L)
+   ============================================================ */
+const SCEN = [
+ {id:"reuniao", nome:"Sala de reuniões", setor:"Diretoria administrativa", tag:"Anexo 4",
+  desc:"Sala de reuniões com seis luminárias no teto, mesa retangular com seis cadeiras e tela de videoconferência. É o exemplo resolvido no Anexo 4 da NHO 11: use-o para validar o seu procedimento (Ī esperada = 494,2 lux).",
+  L:6, W:4.5, H:2.7, caso:1, N:3, M:2, forma:"painel",
+  lamp:{tipo:"LED", desc:"Painel LED de embutir, luz branca fria", Tcp:6400, IRC:82}, m:1.5, refl:.22, design:500,
+  janelas:["S"], noturno:false, maintFix:1, burnP:0,
+  mobilia:[{x:1.4,y:1.6,w:3.2,h:1.3,n:"Mesa de reunião"},{x:5.82,y:1.4,w:.12,h:1.7,n:"Tela"}],
+  tarefas:[
+    {id:"T1",nome:"Lugar 1 (notebook)",x:1.9,y:1.78,z:.75,pl:"H",q:"esc_reu"},
+    {id:"T2",nome:"Lugar 2 (notebook)",x:3.0,y:1.78,z:.75,pl:"H",q:"esc_reu"},
+    {id:"T3",nome:"Lugar 3 (notebook)",x:4.1,y:1.78,z:.75,pl:"H",q:"esc_reu"},
+    {id:"T4",nome:"Lugar 4 (notebook)",x:1.9,y:2.72,z:.75,pl:"H",q:"esc_reu"},
+    {id:"T5",nome:"Lugar 5 (notebook)",x:3.0,y:2.72,z:.75,pl:"H",q:"esc_reu"},
+    {id:"T6",nome:"Lugar 6 (notebook)",x:4.1,y:2.72,z:.75,pl:"H",q:"esc_reu"}],
+  override:{p1:200,p2:350,t1:470,t2:380,t3:420,t4:400,q1:350,q2:320,q3:600,q4:625,r1:360,r2:680,r3:730,r4:650,r5:840,r6:790,r7:600,r8:650,T1:550,T2:600,T3:620,T4:550,T5:650,T6:700},
+  ajuste:0,
+  obs:["As cortinas da janela podem ser fechadas; durante o dia, entra luz solar direta pela tarde.","Nenhuma luminária apagada ou piscando; difusores limpos.","Não há máquinas ou partes em movimento na sala.","A tela de videoconferência não apresenta reflexos das luminárias na posição dos participantes.","A empresa mantém registro anual das medições de iluminância e plano de manutenção das luminárias."],
+  verdade:{a1:"S",a3:"S",a7:"S",a8:"S",a9:"S",a11:"S",a14:"S",a15:"S",a18:"S"}},
+
+ {id:"escritorio", nome:"Escritório administrativo", setor:"Setor de compras – 2º andar", tag:"Caso 1",
+  desc:"Escritório aberto com estações de trabalho com computador, uma ilha de impressão e janelas em toda a fachada sul. Os trabalhadores permanecem a jornada inteira digitando, lendo e processando dados.",
+  L:12, W:8, H:2.7, caso:1, N:4, M:3, forma:"painel",
+  lamp:{tipo:"LED", desc:"Painel LED de embutir 60 × 60 cm, 40 W", Tcp:4000, IRC:85}, m:1.6, refl:.25, design:565,
+  janelas:["S"], noturno:false, burnP:.35, luznat:true,
+  adj:{nome:"Corredor de circulação", media:120},
+  mobilia:[{x:1.5,y:1.5,w:3.6,h:1.4,n:"Ilha A"},{x:6.6,y:1.5,w:3.6,h:1.4,n:"Ilha B"},{x:1.5,y:5.4,w:3.6,h:1.4,n:"Ilha C"},{x:6.6,y:5.4,w:3.6,h:1.4,n:"Ilha D"},{x:10.9,y:3.3,w:.9,h:1.3,n:"Impressora"}],
+  tarefas:[
+    {id:"T1",nome:"Estação A1 – digitação",x:2.2,y:2.0,z:.75,pl:"H",q:"esc_esc"},
+    {id:"T2",nome:"Estação B2 – leitura de processos",x:9.4,y:2.4,z:.75,pl:"H",q:"esc_esc"},
+    {id:"T3",nome:"Estação C1 – digitação (junto à janela)",x:2.4,y:6.4,z:.75,pl:"H",q:"esc_esc"},
+    {id:"T4",nome:"Estação D2 – processamento de dados",x:9.6,y:6.2,z:.75,pl:"H",q:"esc_esc"},
+    {id:"T5",nome:"Ilha de impressão e cópia",x:11.3,y:3.9,z:.9,pl:"H",q:"esc_arq"}],
+  ajuste:0,
+  obs:["Na fileira junto à fachada sul, os monitores refletem a janela e as luminárias; os trabalhadores inclinam as telas para enxergar.","As persianas existem, mas costumam ficar abertas durante o dia.","Não há cintilação perceptível nem máquinas em movimento.","O corredor de acesso tem iluminância média conhecida de 120 lux (medição anterior)."],
+  verdade:{a3:"S",a8:"S",a9:"S",a11:"N",a13:"S"}},
+
+ {id:"aula", nome:"Sala de aula noturna", setor:"Curso técnico – período noturno", tag:"Caso 1",
+  desc:"Sala de aula usada por turmas de educação profissional no período noturno, com nove luminárias de lâmpadas fluorescentes tubulares em reatores eletromagnéticos antigos, quadro negro na parede frontal e janelas na lateral esquerda.",
+  L:9, W:7, H:3.0, caso:1, N:3, M:3, forma:"tubular",
+  lamp:{tipo:"FLU", desc:"Luminária 2 × 32 W, fluorescente tubular T8, reator eletromagnético", Tcp:6500, IRC:80}, m:1.3, refl:.22, design:520,
+  janelas:["O"], noturno:true, maintFix:.82, burnForce:1,
+  mobilia:[{x:2.6,y:.05,w:3.8,h:.12,n:"Quadro negro"},{x:1.4,y:2.9,w:2.4,h:3.4,n:"Carteiras"},{x:5.2,y:2.9,w:2.4,h:3.4,n:"Carteiras"}],
+  tarefas:[
+    {id:"T1",nome:"Quadro negro (plano vertical)",x:4.5,y:.08,z:1.3,pl:"V",nrm:[0,1,0],q:"edu_quad"},
+    {id:"T2",nome:"Carteira – fileira frontal esquerda",x:2.2,y:3.3,z:.75,pl:"H",q:"edu_not"},
+    {id:"T3",nome:"Carteira – fileira frontal direita",x:6.9,y:3.4,z:.75,pl:"H",q:"edu_not"},
+    {id:"T4",nome:"Carteira – fundo esquerdo",x:2.0,y:5.9,z:.75,pl:"H",q:"edu_not"},
+    {id:"T5",nome:"Carteira – fundo direito",x:6.8,y:5.8,z:.75,pl:"H",q:"edu_not"}],
+  ajuste:0,
+  obs:["As aulas acontecem das 19h às 22h40.","Duas lâmpadas tubulares piscam e apresentam as extremidades escurecidas.","Os difusores estão amarelados e com acúmulo de insetos e poeira.","Uma das luminárias da fileira mais próxima do quadro está apagada há semanas; não há registro de pedido de manutenção.","Os alunos do fundo relatam dificuldade para ler o que está escrito no quadro."],
+  verdade:{a3:"N",a9:"N",a14:"N",a15:"N"}},
+
+ {id:"almox", nome:"Almoxarifado central", setor:"Logística – recebimento e separação", tag:"Caso 3",
+  desc:"Galpão estreito com estantes porta-paletes e uma linha única de luminárias de vapor de sódio em alto pé-direito. Dois almoxarifes permanecem no local durante toda a jornada conferindo notas e separando materiais.",
+  L:15, W:6, H:5.0, caso:3, N:5, forma:"campanula",
+  lamp:{tipo:"SOD", desc:"Luminária industrial (campânula) com lâmpada de vapor de sódio de alta pressão, 250 W", Tcp:2000, IRC:25}, m:2.0, refl:.12, design:245,
+  janelas:[], noturno:false, burnP:.35, ocupContinua:true,
+  mobilia:[{x:.6,y:.2,w:13.8,h:.9,n:"Estante 1"},{x:.6,y:4.9,w:9.6,h:.9,n:"Estante 2"},{x:10.9,y:4.6,w:2.6,h:1.1,n:"Bancada"}],
+  tarefas:[
+    {id:"T1",nome:"Bancada de conferência de notas",x:12.2,y:5.1,z:.9,pl:"H",q:"ger_dep"},
+    {id:"T2",nome:"Corredor de separação (leitura de etiquetas)",x:3.2,y:3.9,z:.75,pl:"H",q:"ger_dep"}],
+  ajuste:0,
+  obs:["Sob a luz amarelada, as cores das placas de sinalização e das etiquetas de identificação são difíceis de distinguir.","As estantes projetam sombras nos níveis inferiores dos corredores.","Os almoxarifes trabalham no local durante toda a jornada (ocupação contínua).","Não há janelas; o galpão é iluminado apenas pelas luminárias.","Não se observa cintilação nem efeito estroboscópico."],
+  verdade:{a2:"N",a7:"N",a8:"S",a9:"S"}},
+
+ {id:"oficina", nome:"Oficina de usinagem", setor:"Manutenção mecânica", tag:"Caso 4",
+  desc:"Oficina com tornos, fresadora e uma retificadora plana. Três linhas contínuas de luminárias fluorescentes, todas no mesmo circuito, com reatores eletromagnéticos. A retificadora possui luminária articulada de iluminação suplementar.",
+  L:18, W:12, H:4.0, caso:4, N:6, M:3, forma:"continua",
+  lamp:{tipo:"FLU", desc:"Linhas contínuas de luminárias 2 × 32 W, fluorescente T8, reator eletromagnético", Tcp:4000, IRC:80}, m:1.2, refl:.18, design:365,
+  janelas:["N"], noturno:false, burnP:.35,
+  mobilia:[{x:2.8,y:7.9,w:2.6,h:1.1,n:"Torno"},{x:12.6,y:7.9,w:1.8,h:1.2,n:"Fresadora"},{x:12.2,y:2.9,w:1.8,h:1.2,n:"Retificadora"},{x:15.8,y:.3,w:1.8,h:3.2,n:"Armário"}],
+  tarefas:[
+    {id:"T1",nome:"Torno mecânico – placa e ferramenta",x:4.0,y:8.5,z:1.0,pl:"H",q:"met_usin"},
+    {id:"T2",nome:"Fresadora – mesa de trabalho",x:13.5,y:8.5,z:1.0,pl:"H",q:"met_usin"},
+    {id:"T3",nome:"Retificadora plana (com luminária suplementar)",x:13.1,y:3.5,z:1.0,pl:"H",q:"met_retif",supl:720}],
+  ajuste:0,
+  obs:["Com o torno em funcionamento, a placa parece girar lentamente ou ficar parada em certas rotações.","Todas as luminárias estão ligadas na mesma fase do quadro de iluminação.","A retificadora tem luminária articulada com braço ajustável e dimmer.","As janelas altas da fachada norte deixam entrar luz natural nas manhãs ensolaradas.","Não há cintilação perceptível."],
+  verdade:{a4:"S",a8:"N",a9:"S",a10:"S"}},
+
+ {id:"labqc", nome:"Laboratório de controle de qualidade", setor:"Indústria química – tintas", tag:"Caso 5",
+  desc:"Laboratório de controle de qualidade de uma fábrica de tintas, com bancada analítica e uma bancada de inspeção visual de cor das amostras. Uma linha contínua de luminárias LED no centro do teto; a bancada de cor possui luminária suplementar LED.",
+  L:10, W:5, H:3.0, caso:5, N:6, forma:"continua",
+  lamp:{tipo:"LED", desc:"Linha contínua de luminárias LED lineares; luminária suplementar LED na bancada de cor (mesmo modelo de lâmpada)", Tcp:5000, IRC:82}, m:1.2, refl:.25, design:600,
+  janelas:["S"], noturno:false, burnP:0,
+  mobilia:[{x:1.2,y:.15,w:4.6,h:.8,n:"Bancada analítica"},{x:7.4,y:4.0,w:2.0,h:.85,n:"Inspeção de cor"},{x:8.4,y:.15,w:1.4,h:1.0,n:"Capela"}],
+  tarefas:[
+    {id:"T1",nome:"Bancada analítica – pesagem e titulação",x:3.0,y:.6,z:.9,pl:"H",q:"qui_lab"},
+    {id:"T2",nome:"Bancada de inspeção visual de cor (com luminária suplementar)",x:8.4,y:4.4,z:.9,pl:"H",q:"qui_cor",supl:1150}],
+  ajuste:0,
+  obs:["O tampo das bancadas é de resina preta brilhante e reflete as luminárias na posição de leitura das buretas.","A luminária suplementar da bancada de cor não tem regulagem de intensidade.","Os analistas relatam que a mesma amostra parece de tom diferente quando vista na bancada de cor e na luz do dia.","A janela da fachada sul tem persiana."],
+  verdade:{a4:"S",a10:"N",a11:"N",a8:"S",a9:"S"}},
+
+ {id:"controle", nome:"Sala de controle de subestação", setor:"Utilidades – subestação 13,8 kV", tag:"Caso 2",
+  desc:"Pequena sala de controle sem janelas, com painel sinótico vertical na parede frontal e mesa de supervisão com monitores. O ambiente é iluminado por uma única luminária central de LED.",
+  L:5, W:4, H:3.0, caso:2, forma:"central",
+  lamp:{tipo:"LED", desc:"Luminária LED central de sobrepor, 60 W", Tcp:4000, IRC:80}, m:1.0, refl:.2, design:430,
+  janelas:[], noturno:false, burnP:0,
+  mobilia:[{x:.6,y:.05,w:3.8,h:.15,n:"Painel sinótico"},{x:1.2,y:2.9,w:2.6,h:.8,n:"Mesa de supervisão"}],
+  tarefas:[
+    {id:"T1",nome:"Painel sinótico (plano vertical)",x:2.5,y:.1,z:1.5,pl:"V",nrm:[0,1,0],q:"sub_ctrl"},
+    {id:"T2",nome:"Mesa de supervisão com monitores",x:2.5,y:3.2,z:.75,pl:"H",q:"sub_ctrl"}],
+  ajuste:0,
+  obs:["Os operadores relatam dificuldade para ler os indicadores analógicos da parte inferior do painel.","A luminária aparece refletida nas telas dos monitores da mesa de supervisão.","Não há dimmer nem possibilidade de ajuste da intensidade.","A sala não tem janelas."],
+  verdade:{a3:"N",a10:"N",a11:"N"}},
+
+ {id:"desenho", nome:"Sala de desenho técnico", setor:"Engenharia de projetos", tag:"Caso 6",
+  desc:"Sala de desenho com pranchetas inclinadas e iluminação indireta (teto luminoso). Parte da equipe é formada por projetistas com mais de 55 anos que relatam dificuldade com detalhes finos em papel vegetal.",
+  L:14, W:10, H:3.2, caso:6, forma:"teto",
+  lamp:{tipo:"LED", desc:"Iluminação indireta por perfis LED voltados para o forro (teto luminoso)", Tcp:4000, IRC:90}, m:1.0, refl:.3, design:880,
+  janelas:["N"], noturno:false, burnP:0,
+  mobilia:[{x:2.2,y:3.4,w:1.6,h:1.1,n:"Prancheta"},{x:5.2,y:3.4,w:1.6,h:1.1,n:"Prancheta"},{x:8.2,y:5.5,w:1.6,h:1.1,n:"Prancheta"},{x:10.2,y:6.6,w:1.6,h:1.1,n:"Prancheta"}],
+  tarefas:[
+    {id:"T1",nome:"Prancheta 1 (inclinada 20°)",x:3.0,y:4.0,z:.95,pl:"I",nrm:[0,.342,.94],q:"esc_des"},
+    {id:"T2",nome:"Prancheta 2 (inclinada 20°)",x:6.0,y:4.0,z:.95,pl:"I",nrm:[0,.342,.94],q:"esc_des"},
+    {id:"T3",nome:"Prancheta 3 (inclinada 20°)",x:9.0,y:6.0,z:.95,pl:"I",nrm:[0,.342,.94],q:"esc_des"},
+    {id:"T4",nome:"Prancheta 4 (inclinada 20°)",x:11.0,y:7.1,z:.95,pl:"I",nrm:[0,.342,.94],q:"esc_des"}],
+  ajuste:1, ajusteNota:"capacidade visual dos trabalhadores abaixo do normal e tarefa com contraste excepcionalmente baixo (grafite em papel vegetal)",
+  obs:["Três projetistas com mais de 55 anos relatam fadiga visual e dificuldade com detalhes finos.","O desenho é feito a grafite sobre papel vegetal (baixo contraste).","Não há iluminação individual nas pranchetas nem ajuste de intensidade.","Iluminação indireta, sem ofuscamento direto; não há cintilação.","Janelas na fachada norte com cortinas."],
+  verdade:{a4:"S",a5:"N",a6:"N",a10:"N",a9:"S",a11:"S"}}
+];
+</script>
+<script>
+"use strict";
+/* ============================================================
+   UTILITÁRIOS
+   ============================================================ */
+const $ = (s, r=document) => r.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = (v, d=0) => (v==null || isNaN(v)) ? "—" : Number(v).toLocaleString("pt-BR",{minimumFractionDigits:d, maximumFractionDigits:d});
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+let seed = (Date.now() ^ 0x5bd1e995) >>> 0;
+function rnd(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }
+function gauss(){ let u=0,v=0; while(!u) u=rnd(); while(!v) v=rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+const dateBR = d => d.toLocaleDateString("pt-BR");
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const TODAY = new Date();
+const CASOS = {
+  1:"Área retangular com luminárias em padrão regular, simetricamente espaçadas em duas ou mais fileiras (Figura A1)",
+  2:"Área retangular com luminária central (Figura A2)",
+  3:"Área retangular com linha única de luminárias (Figura A3)",
+  4:"Área retangular com duas ou mais linhas contínuas de luminárias (Figura A4)",
+  5:"Área retangular com uma linha contínua de luminárias (Figura A5)",
+  6:"Área retangular com teto luminoso / iluminação indireta (Figura A6)"
+};
+const COND = {
+  sol_aberta:{n:"Dia ensolarado, cortinas/persianas abertas", D:2600},
+  sol_fechada:{n:"Dia ensolarado, cortinas/persianas fechadas", D:260},
+  nublado:{n:"Dia nublado, cortinas/persianas fechadas", D:12},
+  noite:{n:"Período noturno", D:0}
+};
+const POS = {
+  h120:{n:"Na mão, à altura do peito (≈ 1,20 m)", z:1.2},
+  h075:{n:"Plano horizontal a 0,75 m do piso", z:.75},
+  piso:{n:"Apoiada no piso", z:.02},
+  tarefa:{n:"No plano da tarefa visual (altura e inclinação da tarefa)", z:null}
+};
+
+/* ============================================================
+   GEOMETRIA DOS CASOS DO ANEXO 1
+   ============================================================ */
+function build(sc){
+  const {L,W,H} = sc; const lums=[], src=[], pts=[];
+  const P = (id,x,y) => pts.push({id, grp:id[0], x:clamp(x,.15,L-.15), y:clamp(y,.15,W-.15), kind:"grid"});
+  const addSrc = (x,y,I,lum) => src.push({x,y,z:H,I,lum});
+  if(sc.caso===1){
+    const N=sc.N, M=sc.M, sx=L/N, sy=W/M;
+    for(let j=0;j<M;j++) for(let i=0;i<N;i++){
+      const x=sx*(i+.5), y=sy*(j+.5), idx=lums.length;
+      if(sc.forma==="tubular"){ lums.push({idx,x,y,w:1.25,h:.32,f:"tub"}); [-.4,0,.4].forEach(d=>addSrc(x+d,y,1/3,idx)); }
+      else { lums.push({idx,x,y,w:.6,h:.6,f:"pan"}); addSrc(x,y,1,idx); }
+    }
+    const i0=Math.max(0,Math.floor((N-2)/2)), j0=Math.max(0,Math.floor((M-2)/2));
+    const bay=(i,j)=>[sx*(i+1), sy*(j+1)];
+    let [cx,cy]=bay(i0,j0);
+    P("r1",cx-sx/4,cy-sy/4); P("r2",cx+sx/4,cy-sy/4); P("r3",cx-sx/4,cy+sy/4); P("r4",cx+sx/4,cy+sy/4);
+    let b2 = (N-2>i0) ? bay(i0+1,j0) : (M-2>j0 ? bay(i0,j0+1) : null);
+    if(b2){ [cx,cy]=b2; P("r5",cx-sx/4,cy-sy/4); P("r6",cx+sx/4,cy-sy/4); P("r7",cx-sx/4,cy+sy/4); P("r8",cx+sx/4,cy+sy/4); }
+    else { P("r5",cx,cy-sy/3); P("r6",cx+sx/3,cy); P("r7",cx,cy+sy/3); P("r8",cx-sx/3,cy); }
+    const cq1=sx*(i0+1), cq2=sx*(N-2-i0+1);
+    P("q1",cq1-sx/4,sy/4); P("q2",cq1+sx/4,sy/4); P("q3",cq2-sx/4,W-sy/4); P("q4",cq2+sx/4,W-sy/4);
+    const ct1=sy*(j0+1), ct2=sy*(M-2-j0+1);
+    P("t1",sx/4,ct1-sy/4); P("t2",sx/4,ct1+sy/4); P("t3",L-sx/4,ct2-sy/4); P("t4",L-sx/4,ct2+sy/4);
+    P("p1",sx/4,sy/4); P("p2",L-sx/4,W-sy/4);
+  } else if(sc.caso===2){
+    lums.push({idx:0,x:L/2,y:W/2,w:.9,h:.9,f:"cen"}); addSrc(L/2,W/2,1,0);
+    P("p1",L/4,W/4); P("p2",3*L/4,W/4); P("p3",L/4,3*W/4); P("p4",3*L/4,3*W/4);
+  } else if(sc.caso===3){
+    const N=sc.N, sx=L/N, y=W/2;
+    for(let i=0;i<N;i++){ const x=sx*(i+.5); lums.push({idx:i,x,y,w:.75,h:.75,f:"camp"}); addSrc(x,y,1,i); }
+    const a=Math.max(0,Math.floor((N-1)/2)-1), b=Math.min(N-2,a+1);
+    const ca=sx*(a+1), cb=sx*(b+1);
+    P("q1",ca-sx/4,W/4); P("q2",ca+sx/4,W/4); P("q3",cb-sx/4,W/4); P("q4",cb+sx/4,W/4);
+    P("q5",ca-sx/4,3*W/4); P("q6",ca+sx/4,3*W/4); P("q7",cb-sx/4,3*W/4); P("q8",cb+sx/4,3*W/4);
+    P("p1",sx/4,3*W/4); P("p2",L-sx/4,W/4);
+  } else if(sc.caso===4){
+    const N=sc.N, M=sc.M, sy=W/M, e=.6, len=(L-2*e)/N;
+    for(let j=0;j<M;j++){ const y=sy*(j+.5);
+      for(let i=0;i<N;i++){ const idx=lums.length, x0=e+i*len; lums.push({idx,x:x0+len/2,y,w:len,h:.22,f:"cont"});
+        for(let s=x0+.15; s<x0+len; s+=.3) addSrc(s,y,.3,idx); } }
+    const j0=Math.max(0,Math.floor((M-2)/2)), yc=sy*(j0+1), yt=sy*(M-1-j0);
+    P("r1",L/2-L/12,yc-sy/4); P("r2",L/2+L/12,yc-sy/4); P("r3",L/2-L/8,yc+sy/4); P("r4",L/2+L/24,yc+sy/4);
+    P("q1",L/2,sy/4); P("q2",L/2,W-sy/4);
+    P("t1",e/2,yc-sy/4); P("t2",e/2,yc+sy/4); P("t3",L-e/2,yt-sy/4); P("t4",L-e/2,yt+sy/4);
+    P("p1",e/2,sy/4); P("p2",L-e/2,W-sy/4);
+  } else if(sc.caso===5){
+    const N=sc.N, e=L/10, len=(L-2*e)/N, y=W/2;
+    for(let i=0;i<N;i++){ const x0=e+i*len; lums.push({idx:i,x:x0+len/2,y,w:len,h:.22,f:"cont"});
+      for(let s=x0+.15; s<x0+len; s+=.3) addSrc(s,y,.3,i); }
+    P("q1",L/4,W/4); P("q2",L/2,W/4); P("q3",3*L/4,W/4); P("q4",L/4,3*W/4); P("q5",L/2,3*W/4); P("q6",3*L/4,3*W/4);
+    P("p1",e/2,W/4); P("p2",L-e/2,3*W/4);
+  } else if(sc.caso===6){
+    lums.push({idx:-1,x:L/2,y:W/2,w:L-.6,h:W-.6,f:"teto"});
+    for(let x=.25;x<L;x+=.5) for(let y=.25;y<W;y+=.5) addSrc(x,y,.25,-1);
+    P("r1",L*.47,W*.33); P("r2",L*.33,W*.55); P("r3",L*.64,W*.52); P("r4",L*.52,W*.7);
+    P("q1",L*.58,.6); P("q2",L*.4,W-.6); P("t1",.6,W*.6); P("t2",L-.6,W*.4); P("p1",.6,.6); P("p2",L-.6,W-.6);
+  }
+  const ordem = {r:1,q:2,t:3,p:4};
+  pts.sort((a,b)=> ordem[a.grp]-ordem[b.grp] || a.id.localeCompare(b.id, "pt", {numeric:true}));
+  const tasks = sc.tarefas.map(t => ({...t, kind:"task", grp:"T", nrm: t.pl==="H" ? [0,0,1] : t.nrm}));
+  const ents = [];
+  tasks.filter(t=>t.supl).forEach(t=>{
+    [[.6,0],[0,.6],[-.6,0],[0,-.6]].forEach((d,k)=>{
+      ents.push({id:`E${t.id.slice(1)}.${k+1}`, kind:"ent", grp:"E", task:t.id, x:clamp(t.x+d[0],.15,L-.15), y:clamp(t.y+d[1],.15,W-.15), z:t.z, nrm:[0,0,1]});
+    });
+  });
+  return {lums, src, pts, tasks, ents};
+}
+
+/* ============================================================
+   MODELO FOTOMÉTRICO (didático)
+   ============================================================ */
+function direct(scene, m, x,y,z,n, onlyOn=true){
+  let e=0;
+  for(const s of scene.src){
+    if(onlyOn && s.off) continue;
+    const dx=s.x-x, dy=s.y-y, dz=s.z-z; if(dz<=0) continue;
+    const d2=dx*dx+dy*dy+dz*dz, d=Math.sqrt(d2), cT=dz/d, cI=(dx*n[0]+dy*n[1]+dz*n[2])/d;
+    if(cI<=0) continue;
+    e += s.I*Math.pow(cT,m)*cI/d2;
+  }
+  return e;
+}
+function calibrate(){
+  const sc=S.scen, sn=S.scene; let sum=0, k=0;
+  for(let x=.6;x<=sc.L-.6;x+=.5) for(let y=.6;y<=sc.W-.6;y+=.5){ sum+=direct(sn,sc.m,x,y,.75,[0,0,1],false); k++; }
+  const avgAll=sum/k; let sumOn=0;
+  for(let x=.6;x<=sc.L-.6;x+=.5) for(let y=.6;y<=sc.W-.6;y+=.5){ sumOn+=direct(sn,sc.m,x,y,.75,[0,0,1],true); }
+  sn.avgD=avgAll; sn.avgOn=sumOn/k;
+  sn.k = sc.design/(avgAll*(1+sc.refl));
+  sn.supl={};
+  sn.tasks.filter(t=>t.supl).forEach(t=>{
+    const base=artificial(t.x,t.y,t.z,t.nrm);
+    const unit=Math.pow(1,8)*1/(.55*.55);
+    sn.supl[t.id]={x:t.x,y:t.y,z:t.z+.55, I:Math.max(0,t.supl-base)/unit};
+  });
+}
+function artificial(x,y,z,n){
+  const sc=S.scen, sn=S.scene;
+  const dir=direct(sn,sc.m,x,y,z,n,true);
+  const ind=sc.refl*sn.avgOn*(n[2]>.9?1:.9);
+  return sn.k*(dir+ind)*S.v.maint;
+}
+function suplAt(taskId,x,y,z,n){
+  const s=S.scene.supl && S.scene.supl[taskId]; if(!s) return 0;
+  const dx=s.x-x, dy=s.y-y, dz=s.z-z; if(dz<=0) return 0;
+  const d2=dx*dx+dy*dy+dz*dz, d=Math.sqrt(d2), cT=dz/d, cI=(dx*n[0]+dy*n[1]+dz*n[2])/d;
+  if(cI<=0) return 0; return s.I*Math.pow(cT,8)*cI/d2;
+}
+function daylight(x,y,n,cond){
+  const sc=S.scen; if(!sc.janelas.length) return 0;
+  const D=COND[cond].D; if(!D) return 0;
+  let e=0;
+  sc.janelas.forEach(w=>{
+    const dist = w==="N"? y : w==="S"? sc.W-y : w==="O"? x : sc.L-x;
+    e += D*Math.exp(-dist/1.8);
+  });
+  return e*(n[2]>.9?1:.6);
+}
+function getPt(id){ const sn=S.scene; return sn.pts.find(p=>p.id===id) || sn.tasks.find(p=>p.id===id) || sn.ents.find(p=>p.id===id); }
+function geomFor(pt, pos){
+  if(pos==="tarefa"){
+    if(pt.kind==="task") return {z:pt.z, n:pt.nrm};
+    if(pt.kind==="ent") return {z:pt.z, n:[0,0,1]};
+    return {z:.75, n:[0,0,1]};
+  }
+  return {z:POS[pos].z, n:[0,0,1]};
+}
+function refGeom(pt){ return pt.kind==="grid" ? {z:.75,n:[0,0,1]} : {z:pt.z, n:pt.kind==="task"?pt.nrm:[0,0,1]}; }
+function fieldAt(pt, pos, cond, post, roupa){
+  const g=geomFor(pt,pos);
+  let art=artificial(pt.x,pt.y,g.z,g.n);
+  const ov = S.scen.override && S.scen.override[pt.id];
+  if(ov!=null){ const r=refGeom(pt); art = ov*art/Math.max(1e-6,artificial(pt.x,pt.y,r.z,r.n)); }
+  const tid = pt.kind==="task" ? pt.id : pt.kind==="ent" ? pt.task : null;
+  if(tid) art += suplAt(tid, pt.x, pt.y, g.z, g.n);
+  const day = daylight(pt.x,pt.y,g.n,cond);
+  let E = art + day;
+  if(post==="inclinado") E *= .86;
+  if(roupa==="clara") E *= 1.03;
+  return {E, art, day};
+}
+function idealAt(pt){ // procedimento correto, sem erros instrumentais
+  const r = pt.kind==="grid" ? "h075" : "tarefa";
+  return fieldAt(pt, r, "noite", "afastado", "escura").art;
+}
+function spectral(instId, sel, real){
+  if(instId==="LD400") return real==="LED" ? .84 : 1;
+  if(sel===real) return 1;
+  if(sel==="PAD") return ({LED:.89, FLU:.95, SOD:1.07})[real] || .93;
+  return .93;
+}
+
+/* ============================================================
+   ESTADO
+   ============================================================ */
+const S = { tab:0, scen:null, scene:null, v:null };
+function freshMeter(){
+  return {on:false, unit:"lux", hold:false, holdVal:null, holdPt:null, mm:0, mmMax:null, mmMin:null, mmSum:0, mmN:0,
+          rIdx:1, sel:"PAD", mem:[], acq:0, acqClean:0, clean:0, stable:false, cur:null, last:performance.now(), powerAt:0};
+}
+function rollVariation(sc){
+  const v = {maint: sc.maintFix ?? +(0.82+rnd()*.18).toFixed(2), burned:-1, certExp:null, bias:{}};
+  const sn=S.scene;
+  const nl = sn.lums.filter(l=>l.idx>=0).length;
+  if(sc.burnForce!=null) v.burned = sc.burnForce;
+  else if(sc.burnP && rnd()<sc.burnP && nl>2) v.burned = Math.floor(rnd()*nl);
+  if(rnd()<.5){ const ks=Object.keys(INSTR); v.certExp = ks[Math.floor(rnd()*ks.length)]; }
+  Object.keys(INSTR).forEach(k=>{ v.bias[k] = 1 + (rnd()*2-1)*.012 + (v.certExp===k ? .055 : 0); });
+  v.certDate = {}; Object.keys(INSTR).forEach(k=>{ v.certDate[k] = addDays(TODAY, -(v.certExp===k ? 400+Math.floor(rnd()*60) : 40+Math.floor(rnd()*230))); });
+  v.certN = {}; Object.keys(INSTR).forEach((k,i)=>{ v.certN[k] = `LUX-${TODAY.getFullYear()-1}/${String(Math.floor(1000+rnd()*8999))}`; });
+  return v;
+}
+function selectScenario(id, keepTab){
+  const sc = SCEN.find(s=>s.id===id);
+  S.scen = sc; S.scene = build(sc); S.v = rollVariation(sc);
+  S.scene.src.forEach(s=>{ s.off = (s.lum>=0 && s.lum===S.v.burned); });
+  calibrate();
+  Object.assign(S, {
+    caseSel:null, nSel:"", mSel:"", caseOk:false, enqChecked:false, quadroSel:{}, ajusteSel:null, ajusteMot:"",
+    inst:null, certAns:null, roupa:"clara",
+    meter:freshMeter(), pos:"h120", cond: sc.janelas.length ? "sol_aberta" : "noite", post:"afastado",
+    at:null, rec:{}, prelim:{}, prelimChecked:false, corSel:null, avaliador:"", msg:null
+  });
+  if(!sc.janelas.length && sc.noturno) S.cond="noite";
+  if(!keepTab) S.tab=0;
+  render();
+}
+function reroll(){
+  const id=S.scen.id; const keep=S.tab; selectScenario(id, true); S.tab=keep; render();
+}
+function dynObs(){
+  const o=[...S.scen.obs];
+  if(S.v.burned>=0 && S.scen.burnForce==null) o.push("Uma das luminárias está apagada (lâmpada queimada) e não há registro de solicitação de troca.");
+  if(S.v.maint<.88 && S.scen.maintFix==null) o.push("As luminárias e os difusores apresentam acúmulo visível de poeira; não há rotina de limpeza documentada.");
+  return o;
+}
+function truth(){
+  const t={...S.scen.verdade};
+  if(S.v.burned>=0) t.a15="N";
+  if(S.v.maint<.88 && S.scen.maintFix==null) t.a14="N";
+  return t;
+}
+function aparencia(tcp){ return tcp<3300 ? "Quente" : tcp<=5300 ? "Intermediária" : "Fria"; }
+
+/* ============================================================
+   RENDERIZAÇÃO GERAL
+   ============================================================ */
+const TABS = ["Cenário","Enquadramento","Instrumento","Avaliação preliminar","Medição","Resultados e relatório"];
+function stepDone(i){
+  if(!S.scen) return false;
+  if(i===0) return true;
+  if(i===1) return S.caseOk && S.enqChecked;
+  if(i===2) return !!S.inst && S.certAns!=null;
+  if(i===3) return S.prelimChecked;
+  if(i===4) return progress().all;
+  if(i===5) return progress().all;
+}
+function progress(){
+  if(!S.scene) return {g:0,gt:0,t:0,tt:0,e:0,et:0,all:false};
+  const sn=S.scene, r=S.rec;
+  const g=sn.pts.filter(p=>r[p.id]).length, t=sn.tasks.filter(p=>r[p.id]).length, e=sn.ents.filter(p=>r[p.id]).length;
+  return {g, gt:sn.pts.length, t, tt:sn.tasks.length, e, et:sn.ents.length, all: S.caseOk && g===sn.pts.length && t===sn.tasks.length && e===sn.ents.length};
+}
+function render(){
+  const st=$("#steps");
+  st.innerHTML = TABS.map((t,i)=>`<button role="tab" aria-selected="${S.tab===i}" data-tab="${i}"><span class="n">${i+1}</span>${t}<span class="st ${stepDone(i)?"done":""}"></span></button>`).join("");
+  st.querySelectorAll("button").forEach(b=>b.onclick=()=>{ S.tab=+b.dataset.tab; render(); window.scrollTo({top:0}); });
+  const chips=[];
+  if(S.scen){ chips.push(`<span class="chip">Cenário <b>${esc(S.scen.nome)}</b></span>`);
+    chips.push(`<span class="chip">Instrumento <b>${S.inst?INSTR[S.inst].nome:"—"}</b></span>`);
+    const p=progress(); chips.push(`<span class="chip">Pontos <b class="mono">${p.g+p.t+p.e}/${p.gt+p.tt+p.et}</b></span>`); }
+  $("#statusChips").innerHTML=chips.join("");
+  const v=$("#view");
+  if(!S.scen && S.tab>0) S.tab=0;
+  [vCenario,vEnquadramento,vInstrumento,vPreliminar,vMedicao,vResultados][S.tab](v);
+}
+function nextBtn(label="Avançar"){ return `<div class="row"><button class="btn primary" data-next>${label} →</button></div>`; }
+function wireNext(v){ v.querySelectorAll("[data-next]").forEach(b=>b.onclick=()=>{ S.tab=Math.min(5,S.tab+1); render(); window.scrollTo({top:0}); }); }
+
+/* ---------- planta da sala (SVG) ---------- */
+function planSVG(opt={}){
+  const sc=S.scen, sn=S.scene, mini=!!opt.mini;
+  return planSVGFor(sc, sn, mini, opt);
+}
+function planSVGFor(sc, sn, mini, opt={}){
+  const sm = mini ? 18 : Math.min(70, 1000/sc.L);
+  const pad = mini ? 10 : 34;
+  const Wd=sc.L*sm+2*pad, Hd=sc.W*sm+2*pad + (mini?0:22);
+  const X=x=>pad+x*sm, Y=y=>pad+y*sm;
+  const fs = mini ? 9 : Math.max(12, Wd/50);
+  let s=`<svg viewBox="0 0 ${Wd.toFixed(1)} ${Hd.toFixed(1)}" role="img" aria-label="Planta de ${esc(sc.nome)}">`;
+  s+=`<defs><pattern id="hatch${mini?"m":""}${sc.id}" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="var(--accent)" stroke-width="1.4" opacity=".55"/></pattern></defs>`;
+  s+=`<rect x="${X(0)}" y="${Y(0)}" width="${sc.L*sm}" height="${sc.W*sm}" fill="var(--floor)" stroke="var(--wall)" stroke-width="${mini?2:3}"/>`;
+  // janelas
+  sc.janelas.forEach(w=>{
+    const t=mini?3:5; let x1,y1,x2,y2;
+    if(w==="N"){x1=X(sc.L*.15);x2=X(sc.L*.85);y1=y2=Y(0);} if(w==="S"){x1=X(sc.L*.15);x2=X(sc.L*.85);y1=y2=Y(sc.W);}
+    if(w==="O"){y1=Y(sc.W*.15);y2=Y(sc.W*.85);x1=x2=X(0);} if(w==="L"){y1=Y(sc.W*.15);y2=Y(sc.W*.85);x1=x2=X(sc.L);}
+    s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--window)" stroke-width="${t*1.6}"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--floor)" stroke-width="${t*.5}"/>`;
+  });
+  // mobiliário
+  sc.mobilia.forEach(f=>{
+    s+=`<rect x="${X(f.x)}" y="${Y(f.y)}" width="${f.w*sm}" height="${f.h*sm}" rx="2" fill="var(--furn)" stroke="var(--line)"/>`;
+    if(!mini && f.w*sm>40) s+=`<text x="${X(f.x+f.w/2)}" y="${Y(f.y+f.h/2)+fs*.35}" text-anchor="middle" font-size="${fs*.8}" fill="var(--muted)" font-family="var(--f-body)">${esc(f.n)}</text>`;
+  });
+  // luminárias
+  sn.lums.forEach(l=>{
+    const burned = !mini && S.v && l.idx===S.v.burned && l.idx>=0 && S.scen===sc;
+    const fill = burned ? "var(--line)" : "var(--accent)";
+    if(l.f==="teto"){ s+=`<rect x="${X(l.x-l.w/2)}" y="${Y(l.y-l.h/2)}" width="${l.w*sm}" height="${l.h*sm}" fill="url(#hatch${mini?"m":""}${sc.id})" stroke="var(--accent)" stroke-dasharray="6 4"/>`; return; }
+    if(l.f==="camp"||l.f==="cen"){ s+=`<circle cx="${X(l.x)}" cy="${Y(l.y)}" r="${l.w/2*sm}" fill="${fill}" fill-opacity="${burned?1:.85}" stroke="var(--wall)" stroke-width="1"/>`; }
+    else s+=`<rect x="${X(l.x-l.w/2)}" y="${Y(l.y-l.h/2)}" width="${l.w*sm}" height="${Math.max(l.h*sm,2)}" fill="${fill}" fill-opacity="${burned?1:.85}" stroke="var(--wall)" stroke-width="${mini?.5:1}"/>`;
+    if(burned){ const r=Math.min(Math.max(l.w,l.h)/2,.5)*sm*.9; s+=`<path d="M${X(l.x)-r} ${Y(l.y)-r}L${X(l.x)+r} ${Y(l.y)+r}M${X(l.x)+r} ${Y(l.y)-r}L${X(l.x)-r} ${Y(l.y)+r}" stroke="var(--bad)" stroke-width="2"/>`; }
+  });
+  if(mini){ s+="</svg>"; return s; }
+  // cotas
+  s+=`<text x="${X(sc.L/2)}" y="${Hd-8}" text-anchor="middle" font-size="${fs*.85}" fill="var(--muted)" font-family="var(--f-mono)">L = ${fmt(sc.L,1)} m · W = ${fmt(sc.W,1)} m · luminárias a ${fmt(sc.H,1)} m do piso</text>`;
+  // pontos
+  const showPts = opt.points;
+  if(showPts){
+    const r=fs*.95;
+    const col = g => ({r:"var(--g-r)",q:"var(--g-q)",t:"var(--g-t)",p:"var(--g-p)",T:"var(--g-task)",E:"var(--g-ent)"})[g];
+    const all=[...(S.caseOk?sn.pts:[]), ...sn.tasks, ...sn.ents];
+    all.forEach(p=>{
+      const done=!!S.rec[p.id], c=col(p.grp), cx=X(p.x), cy=Y(p.y);
+      const shape = p.kind==="grid" ? `<circle class="ring" cx="${cx}" cy="${cy}" r="${r}" stroke="${c}" ${done?`style="fill:${c}"`:""}/>`
+        : p.kind==="task" ? `<rect class="ring" x="${cx-r}" y="${cy-r}" width="${2*r}" height="${2*r}" rx="2" transform="rotate(45 ${cx} ${cy})" stroke="${c}" stroke-width="2.2" style="fill:${done?c:"var(--surface)"}"/>`
+        : `<circle class="ring" cx="${cx}" cy="${cy}" r="${r*.7}" stroke="${c}" stroke-dasharray="3 2" ${done?`style="fill:${c}"`:""}/>`;
+      const lbl = p.kind==="ent" ? "e"+p.id.split(".")[1] : p.id;
+      s+=`<g class="pt ${done?"done":""}" data-pt="${p.id}" tabindex="0" role="button" aria-label="Ponto ${p.id}">${shape}<text x="${cx}" y="${cy+3.5}" text-anchor="middle" fill="${done?"var(--surface)":c}" font-weight="600" font-size="${p.kind==="ent"?fs*.65:fs*.8}">${esc(lbl)}</text>`;
+      if(done) s+=`<text x="${cx}" y="${cy+r+fs}" text-anchor="middle" fill="var(--ink)" font-size="${fs*.78}">${fmt(S.rec[p.id].v,0)}</text>`;
+      s+=`</g>`;
+    });
+    if(S.at){ const p=getPt(S.at); if(p){ const cx=X(p.x), cy=Y(p.y), R=r*1.9;
+      s+=`<g class="sensor"><circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="4 3"/><path d="M${cx-R-6} ${cy}H${cx-R+4}M${cx+R-4} ${cy}H${cx+R+6}M${cx} ${cy-R-6}V${cy-R+4}M${cx} ${cy+R-4}V${cy+R+6}" stroke="var(--ink)" stroke-width="1.5"/></g>`; } }
+  }
+  s+="</svg>"; return s;
+}
+
+/* ---------- glossário ---------- */
+function renderGloss(){
+  const q=($("#glosSearch").value||"").trim().toLowerCase();
+  $("#glosList").innerHTML = GLOSS.map(([g,items])=>{
+    const f = items.filter(([t,d])=>!q || (t+" "+d).toLowerCase().includes(q));
+    if(!f.length) return "";
+    return `<div class="group">${g}</div>` + f.map(([t,d,r])=>`<details ${q?"open":""}><summary>${esc(t)}</summary><p>${esc(d)}</p><p class="ref">NHO 11 · item ${r}</p></details>`).join("");
+  }).join("") || `<p class="note">Nenhum termo encontrado.</p>`;
+}
+
+/* ============================================================
+   ABA 1 – CENÁRIO
+   ============================================================ */
+function vCenario(v){
+  const cards = SCEN.map(sc=>{
+    const sn=build(sc);
+    return `<button class="scen" data-scen="${sc.id}" aria-pressed="${S.scen&&S.scen.id===sc.id}">${planSVGFor(sc,sn,true)}<span class="t"><b>${esc(sc.nome)}</b><span>${esc(sc.setor)} · ${esc(sc.tag)}</span></span></button>`;
+  }).join("");
+  let det="";
+  if(S.scen){
+    const sc=S.scen;
+    det=`<div class="card" style="display:grid;gap:14px">
+      <div class="eyebrow">Ambiente selecionado</div>
+      <h2>${esc(sc.nome)}</h2>
+      <p style="max-width:75ch">${esc(sc.desc)}</p>
+      <div class="facts">
+        <div class="fact"><span>Dimensões</span><b>${fmt(sc.L,1)} × ${fmt(sc.W,1)} m</b></div>
+        <div class="fact"><span>Altura das luminárias</span><b>${fmt(sc.H,1)} m</b></div>
+        <div class="fact"><span>Sistema de iluminação</span><b>${esc(sc.lamp.desc)}</b></div>
+        <div class="fact"><span>Tipo de lâmpada</span><b>${LAMP_LABEL[sc.lamp.tipo]}</b></div>
+        <div class="fact"><span>Tcp (fabricante)</span><b>${fmt(sc.lamp.Tcp)} K</b></div>
+        <div class="fact"><span>IRC (fabricante)</span><b>${sc.lamp.IRC}</b></div>
+        <div class="fact"><span>Período de trabalho</span><b>${sc.noturno?"Noturno":"Diurno"}</b></div>
+        <div class="fact"><span>Janelas</span><b>${sc.janelas.length?"Sim":"Não"}</b></div>
+      </div>
+      <div>${planSVG({})}</div>
+      <p class="note">Cada vez que o cenário é carregado, o simulador sorteia condições de campo diferentes (sujidade das luminárias, lâmpadas queimadas, situação do certificado de calibração dos aparelhos).</p>
+      <div class="row"><button class="btn" id="reroll">Sortear nova condição de campo</button><button class="btn primary" data-next>Ir para o enquadramento →</button></div>
+    </div>`;
+  }
+  v.innerHTML = `<div><div class="eyebrow">Etapa 1</div><h2>Escolha o ambiente de trabalho</h2></div>
+    <p class="lead">Selecione um dos ambientes internos. A sala de reuniões reproduz o exemplo do Anexo 4 da NHO 11 e serve para validar o procedimento; os demais cobrem as seis configurações de luminárias do Anexo 1.</p>
+    <div class="scen-grid">${cards}</div>${det}`;
+  v.querySelectorAll("[data-scen]").forEach(b=>b.onclick=()=>{ if(!S.scen || S.scen.id!==b.dataset.scen) selectScenario(b.dataset.scen); });
+  const rr=$("#reroll"); if(rr) rr.onclick=reroll;
+  wireNext(v);
+}
+
+/* ============================================================
+   ABA 2 – ENQUADRAMENTO
+   ============================================================ */
+function quadroOptions(sel){
+  const groups={}; Object.entries(QUADRO).forEach(([k,q])=>{ (groups[q.g]=groups[q.g]||[]).push([k,q]); });
+  return `<option value="">Selecione a atividade no Quadro 1…</option>` + Object.entries(groups).map(([g,arr])=>`<optgroup label="${esc(g)}">${arr.map(([k,q])=>`<option value="${k}" ${sel===k?"selected":""}>${esc(q.n)} – ${fmt(q.E)} lux / IRC ${q.IRC}</option>`).join("")}</optgroup>`).join("");
+}
+function vEnquadramento(v){
+  const sc=S.scen, sn=S.scene;
+  const needNM = [1,3,4,5].includes(sc.caso) || (S.caseSel && [1,3,4,5].includes(+S.caseSel));
+  const needM = S.caseSel && [1,4].includes(+S.caseSel);
+  const caseList = Object.entries(CASOS).map(([k,t])=>`<label style="display:flex;gap:8px;align-items:flex-start;padding:4px 0"><input type="radio" name="caso" value="${k}" ${S.caseSel==k?"checked":""}><span><b>Caso ${k}.</b> ${esc(t)}</span></label>`).join("");
+  let fb="";
+  if(S.enqChecked){
+    const items=[];
+    items.push(S.caseOk ? `<div class="msg ok">Configuração correta: caso ${sc.caso} do Anexo 1${sc.N?`, com N = ${sc.N}`:""}${sc.M?` e M = ${sc.M}`:""}. A malha de pontos foi liberada na etapa de medição.</div>`
+      : `<div class="msg bad">Reveja a configuração. Observe na planta como as luminárias estão distribuídas (pontuais em fileiras, linha única, linhas contínuas, luminária central ou teto luminoso) e conte as luminárias por fila (N) e o número de filas (M).</div>`);
+    sn.tasks.forEach(t=>{
+      const s=S.quadroSel[t.id]; const ok=s===t.q;
+      items.push(`<div class="msg ${ok?"ok":"bad"}"><b>${esc(t.nome)}:</b> ${ok?`enquadramento adequado (${esc(QUADRO[t.q].n)}, ${fmt(QUADRO[t.q].E)} lux).`:`o enquadramento esperado é “${esc(QUADRO[t.q].n)}” (${esc(QUADRO[t.q].g)}).`}</div>`);
+    });
+    const aj = +S.ajusteSel;
+    items.push(aj===sc.ajuste ? `<div class="msg ok"><b>Escala de iluminância (item 5.1):</b> ${sc.ajuste? `correto, aumentar ${sc.ajuste} nível – ${esc(sc.ajusteNota)}.`:"correto, não há condição que justifique ajuste."}</div>`
+      : `<div class="msg bad"><b>Escala de iluminância (item 5.1):</b> ${sc.ajuste?`a descrição do cenário indica ${esc(sc.ajusteNota)}; a iluminância deve ser aumentada em pelo menos um nível.`:"não há, na descrição do cenário, condição que justifique ajuste; mantenha o valor do Quadro 1."}</div>`);
+    if(sc.ocupContinua) items.push(`<div class="msg warn">Lembre-se: em áreas com tarefas contínuas a iluminância não pode ser inferior a 200 lux (item 5); o próprio Quadro 1 indica 200 lux para depósitos continuamente ocupados.</div>`);
+    fb=`<div class="flag-list">${items.join("")}</div>`;
+  }
+  v.innerHTML = `<div><div class="eyebrow">Etapa 2</div><h2>Enquadramento normativo</h2></div>
+   <p class="lead">Antes de medir, defina como a iluminância média será calculada (Anexo 1) e qual nível mínimo de iluminamento E do Quadro 1 se aplica a cada tarefa.</p>
+   <div class="grid2">
+     <div class="card" style="display:grid;gap:10px">
+       <h3>Configuração das luminárias (Anexo 1)</h3>
+       ${planSVG({})}
+       <div>${caseList}</div>
+       <div class="row">
+         <label class="f">N – luminárias por fila (ou na linha)<input type="text" id="nSel" inputmode="numeric" value="${esc(S.nSel)}" style="width:110px"></label>
+         <label class="f">M – número de filas<input type="text" id="mSel" inputmode="numeric" value="${esc(S.mSel)}" style="width:110px"></label>
+       </div>
+       <p class="note">Nos casos 2 e 6, N e M não são usados (no caso 6, a fórmula usa as dimensões W e L do recinto). Em linhas contínuas, considere cada módulo de luminária ao contar N.</p>
+     </div>
+     <div class="card" style="display:grid;gap:12px;align-content:start">
+       <h3>Nível mínimo de iluminamento (Quadro 1)</h3>
+       ${sn.tasks.map(t=>`<label class="f">${esc(t.nome)}<select data-q="${t.id}">${quadroOptions(S.quadroSel[t.id])}</select></label>`).join("")}
+       <h3 style="margin-top:6px">Escala de iluminância (item 5.1)</h3>
+       <label class="f">Ajuste do valor de E<select id="ajSel">
+         <option value="">Selecione…</option>
+         <option value="0" ${S.ajusteSel==="0"?"selected":""}>Manter o valor do Quadro 1</option>
+         <option value="1" ${S.ajusteSel==="1"?"selected":""}>Aumentar um nível (trabalho crítico, visão abaixo do normal ou baixo contraste)</option>
+         <option value="-1" ${S.ajusteSel==="-1"?"selected":""}>Reduzir um nível (detalhes grandes ou de alto contraste, com justificativa)</option>
+       </select></label>
+       <p class="note">Escala: ${ESCALA.map(e=>fmt(e)).join(" – ")} lux.</p>
+     </div>
+   </div>
+   <div class="row"><button class="btn primary" id="chkEnq">Conferir enquadramento</button></div>
+   ${fb}
+   ${S.caseOk?nextBtn("Escolher o instrumento"):""}`;
+  v.querySelectorAll("input[name=caso]").forEach(r=>r.onchange=()=>{ S.caseSel=r.value; });
+  $("#nSel").oninput=e=>S.nSel=e.target.value; $("#mSel").oninput=e=>S.mSel=e.target.value;
+  v.querySelectorAll("[data-q]").forEach(s=>s.onchange=()=>{ S.quadroSel[s.dataset.q]=s.value; });
+  $("#ajSel").onchange=e=>S.ajusteSel=e.target.value;
+  $("#chkEnq").onclick=()=>{
+    const c=+S.caseSel, n=parseInt(S.nSel,10), m=parseInt(S.mSel,10);
+    let ok = c===sc.caso;
+    if(ok && [1,3,4,5].includes(c)) ok = n===sc.N;
+    if(ok && [1,4].includes(c)) ok = m===sc.M;
+    S.caseOk = ok; S.enqChecked = true;
+    if(S.ajusteSel==="" || S.ajusteSel==null) S.ajusteSel="0";
+    render();
+  };
+  wireNext(v);
+}
+
+/* ============================================================
+   ABA 3 – INSTRUMENTO
+   ============================================================ */
+function vInstrumento(v){
+  const sc=S.scen;
+  const cards = Object.entries(INSTR).map(([k,it])=>{
+    const cd=S.v.certDate[k], val=addDays(cd,365);
+    return `<div class="inst" role="button" tabindex="0" data-inst="${k}" aria-pressed="${S.inst===k}">
+      <h3><span>${it.nome}</span><span class="pill na">Instrutherm</span></h3>
+      <div class="note">${esc(it.sub)}</div>
+      <ul>${it.specs.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>
+      <div class="cert"><b>Certificado de calibração nº ${S.v.certN[k]}</b>
+        <span>Laboratório acreditado pela Cgcre/Inmetro (RBC) · pontos: 200, 600 e 1.200 lux</span>
+        <span>Data da calibração: <b class="mono">${dateBR(cd)}</b> · periodicidade adotada pela empresa: 12 meses</span></div>
+    </div>`;
+  }).join("");
+  let certFb="";
+  if(S.inst && S.certAns){
+    const exp = S.v.certExp===S.inst;
+    const right = (S.certAns==="vencido")===exp;
+    certFb = `<div class="msg ${right?"ok":"bad"}">${right ? (exp?"Correto: o certificado está vencido. Pelo item 6.3.2, o medidor deve estar calibrado; se medir com ele, o relatório registrará a não conformidade. O ideal é escolher outro aparelho.":"Correto: a calibração está dentro da periodicidade de 12 meses.") : `Confira de novo: a calibração foi feita em ${dateBR(S.v.certDate[S.inst])} e hoje é ${dateBR(TODAY)}.`}</div>`;
+  }
+  v.innerHTML = `<div><div class="eyebrow">Etapa 3</div><h2>Instrumento de medição</h2></div>
+   <p class="lead">Escolha o luxímetro. O item 6.3.1 exige fotocélula corrigida para a sensibilidade do olho humano e para o ângulo de incidência, e especificação do fabricante que permita medir conforme o tipo de lâmpada do ambiente. Neste cenário, o sistema é: <b>${esc(sc.lamp.desc)}</b>.</p>
+   <div class="inst-grid">${cards}</div>
+   <div class="grid2">
+     <div class="card" style="display:grid;gap:10px">
+       <h3>Certificado de calibração (item 6.3.2)</h3>
+       <p class="note">Hoje é ${dateBR(TODAY)}. Verifique a situação do certificado do aparelho escolhido.</p>
+       <div class="row"><span>Situação:</span><span class="seg" id="certSeg"><button aria-pressed="${S.certAns==="valido"}" data-c="valido" ${S.inst?"":"disabled"}>Válido</button><button aria-pressed="${S.certAns==="vencido"}" data-c="vencido" ${S.inst?"":"disabled"}>Vencido</button></span></div>
+       ${certFb}
+     </div>
+     <div class="card" style="display:grid;gap:10px">
+       <h3>Preparação do avaliador (item 6.2)</h3>
+       <p class="note">Escolha a vestimenta usada durante as medições.</p>
+       <div class="row"><span>Roupa:</span><span class="seg" id="roupaSeg"><button aria-pressed="${S.roupa==="clara"}" data-r="clara">Clara</button><button aria-pressed="${S.roupa==="escura"}" data-r="escura">Escura</button></span></div>
+       <p class="note">Antes de medir, configure no aparelho o tipo de fonte de luz (tecla FONTE), quando o modelo permitir, e respeite o tempo de estabilização ao ligar.</p>
+     </div>
+   </div>
+   ${S.inst?nextBtn("Fazer a avaliação preliminar"):""}`;
+  v.querySelectorAll("[data-inst]").forEach(c=>{ const f=()=>{ if(S.inst!==c.dataset.inst){ S.inst=c.dataset.inst; S.certAns=null; S.meter=freshMeter(); } render(); }; c.onclick=f; c.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); f(); } }; });
+  v.querySelectorAll("#certSeg button").forEach(b=>b.onclick=()=>{ S.certAns=b.dataset.c; render(); });
+  v.querySelectorAll("#roupaSeg button").forEach(b=>b.onclick=()=>{ S.roupa=b.dataset.r; render(); });
+  wireNext(v);
+}
+
+/* ============================================================
+   ABA 4 – AVALIAÇÃO PRELIMINAR
+   ============================================================ */
+function vPreliminar(v){
+  const sc=S.scen, tr=truth();
+  const rows = A3.map(([id,q])=>{
+    const a=S.prelim[id]; let fb="";
+    if(S.prelimChecked && tr[id]){
+      const ok=a===tr[id];
+      fb=`<div class="fb"><span class="pill ${ok?"ok":"bad"}">${ok?"Coerente com as observações":"Reveja"}</span> ${ok?"":`Pelas observações de campo, a resposta esperada é “${tr[id]==="S"?"Sim":"Não"}”.`}</div>`;
+    }
+    return `<div class="chk"><span>${esc(q)}</span><span class="seg" data-a="${id}">${["S","N","NA"].map(o=>`<button aria-pressed="${a===o}" data-o="${o}">${o==="S"?"Sim":o==="N"?"Não":"N.A."}</button>`).join("")}</span>${fb}</div>`;
+  }).join("");
+  let corFb="";
+  if(S.prelimChecked){ const ok=S.corSel===aparencia(sc.lamp.Tcp); corFb=`<div class="msg ${ok?"ok":"bad"}">${ok?"Classificação correta.":`Com Tcp de ${fmt(sc.lamp.Tcp)} K, a aparência é ${aparencia(sc.lamp.Tcp).toLowerCase()} (Quadro A1).`}</div>`; }
+  v.innerHTML = `<div><div class="eyebrow">Etapa 4</div><h2>Avaliação preliminar (item 6.1)</h2></div>
+   <p class="lead">Leia as observações feitas na visita ao local e responda à lista de verificação do Quadro A3 (Anexo 3). Use “N.A.” quando a pergunta não se aplicar ao ambiente.</p>
+   <div class="grid2">
+     <div class="card"><h3>Observações de campo</h3><ul class="obs">${dynObs().map(o=>`<li>${esc(o)}</li>`).join("")}</ul></div>
+     <div class="card" style="display:grid;gap:10px;align-content:start">
+       <h3>Aparência da cor (Quadro A1)</h3>
+       <p class="note">Lâmpada com Tcp de ${fmt(sc.lamp.Tcp)} K informada pelo fabricante.</p>
+       <span class="seg" id="corSeg">${["Quente","Intermediária","Fria"].map(c=>`<button aria-pressed="${S.corSel===c}" data-c="${c}">${c}</button>`).join("")}</span>
+       ${corFb}
+     </div>
+   </div>
+   <div class="card"><h3>Quadro A3 – Lista de verificação do sistema de iluminação</h3>${rows}</div>
+   <div class="row"><button class="btn primary" id="chkPre">Conferir avaliação preliminar</button></div>
+   ${S.prelimChecked?nextBtn("Ir para a medição"):""}`;
+  v.querySelectorAll("[data-a]").forEach(seg=>seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{ S.prelim[seg.dataset.a]=b.dataset.o; seg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", x===b)); }));
+  v.querySelectorAll("#corSeg button").forEach(b=>b.onclick=()=>{ S.corSel=b.dataset.c; v.querySelectorAll("#corSeg button").forEach(x=>x.setAttribute("aria-pressed",x===b)); });
+  $("#chkPre").onclick=()=>{ S.prelimChecked=true; render(); };
+  wireNext(v);
+}
+
+/* ============================================================
+   ABA 5 – MEDIÇÃO (luxímetro virtual)
+   ============================================================ */
+function rangeInfo(){
+  const it=INSTR[S.inst], M=S.meter;
+  if(it.autoR) return null;
+  const R=it.ranges[M.rIdx]; return {R, res: R/it.counts};
+}
+function displayValue(lux){
+  const it=INSTR[S.inst], M=S.meter;
+  let v = M.unit==="fc" ? lux/10.764 : lux;
+  if(it.autoR){
+    if(v>999900) return {txt:"OL", num:null, res:null};
+    const res = v<400 ? .1 : v<4000 ? 1 : v<40000 ? 10 : 100;
+    const n=Math.round(v/res)*res; return {txt:fmt(n, res<1?1:0), num:n, res};
+  }
+  const ri=rangeInfo(); let R=ri.R, res=ri.res;
+  if(M.unit==="fc"){ R=R/10.764; }
+  if(v>R*1.0){ return {txt: S.inst==="LD400" ? "1&nbsp;&nbsp;&nbsp;&nbsp;" : "OL", num:null, res}; }
+  const dec = res<.05 ? 2 : res<.5 ? 1 : 0;
+  const step = dec===2 ? .01 : dec===1 ? .1 : res>=100 ? 100 : res>=10 ? 10 : 1;
+  const n=Math.round(v/step)*step; return {txt:fmt(n,dec), num:n, res:step};
+}
+function meterTick(){
+  if(S.tab!==4 || !S.inst) return;
+  const M=S.meter, now=performance.now(), dt=Math.min(1,(now-M.last)/1000); M.last=now;
+  if(M.on){
+    let clean=0, noisy=0;
+    if(S.at){
+      const pt=getPt(S.at); const f=fieldAt(pt,S.pos,S.cond,S.post,S.roupa);
+      const sel = INSTR[S.inst].lampSel ? M.sel : "PAD";
+      clean = f.E*spectral(S.inst, sel, S.scen.lamp.tipo)*S.v.bias[S.inst];
+      noisy = clean*(1+gauss()*INSTR[S.inst].sd);
+    }
+    const tau = (now-M.powerAt<4000) ? 1.2 : .5, a=1-Math.exp(-dt/tau);
+    M.acqClean += (clean-M.acqClean)*a; M.clean=clean;
+    M.acq = clean>0 ? M.acqClean*(noisy/clean) : M.acqClean;
+    M.stable = clean>0 && Math.abs(M.acqClean-clean)/clean < .015;
+    if(!M.hold){
+      M.cur = M.acq;
+      if(M.mm){ M.mmMax = M.mmMax==null?M.cur:Math.max(M.mmMax,M.cur); M.mmMin = M.mmMin==null?M.cur:Math.min(M.mmMin,M.cur); M.mmSum+=M.cur; M.mmN++; }
+    }
+  }
+  drawLCD();
+}
+function shownLux(){
+  const M=S.meter; if(!M.on) return null;
+  if(M.hold) return M.holdVal;
+  if(M.mm===1) return M.mmMax; if(M.mm===2) return M.mmMin; if(M.mm===3) return M.mmN?M.mmSum/M.mmN:null;
+  return M.cur;
+}
+function drawLCD(){
+  const el=$("#lcd"); if(!el) return; const M=S.meter, it=INSTR[S.inst];
+  if(!M.on){ el.querySelector(".digits").innerHTML="&nbsp;"; el.querySelectorAll(".ann span").forEach(s=>s.classList.remove("on")); el.querySelector(".bar i").style.width="0"; return; }
+  const v=shownLux(); const d = v==null ? {txt:"----"} : displayValue(v);
+  el.querySelector(".digits").innerHTML = `${d.txt}<small>${M.unit==="fc"?"fc":"lux"}</small>`;
+  const on = k => { const s=el.querySelector(`[data-ann="${k}"]`); if(s) s.classList.toggle("on", true); };
+  el.querySelectorAll(".ann span").forEach(s=>s.classList.remove("on"));
+  on(M.unit==="fc"?"FC":"LUX"); if(M.hold) on("HOLD"); if(M.mm===1) on("MAX"); if(M.mm===2) on("MIN"); if(M.mm===3) on("AVG");
+  if(it.autoR) on("AUTO"); else on("RANGE");
+  if(it.lampSel) on("SRC"); if(it.mem && M.mem.length) on("MEM");
+  const rs=el.querySelector('[data-ann="RANGE"]'); if(rs && !it.autoR) rs.textContent = "ESC " + fmt(rangeInfo().R);
+  const sr=el.querySelector('[data-ann="SRC"]'); if(sr) sr.textContent = "FONTE " + ({PAD:"PADRÃO",LED:"LED",FLU:"FLUOR",SOD:"SÓDIO",MET:"METÁL"})[M.sel];
+  const mm=el.querySelector('[data-ann="MEM"]'); if(mm) mm.textContent = "MEM " + M.mem.length;
+  const full = it.autoR ? 1000 : rangeInfo().R;
+  el.querySelector(".bar i").style.width = (v==null?0:clamp(v/full*100,0,100))+"%";
+}
+function meterHTML(){
+  const it=INSTR[S.inst];
+  const ann = ["LUX","FC","HOLD","MAX","MIN"].concat(S.inst==="LD550"?["AVG"]:[]).concat(it.autoR?["AUTO"]:["RANGE"]).concat(it.lampSel?["SRC"]:[]).concat(it.mem?["MEM"]:[]);
+  const keys = [["pwr","POWER"],["unit","LUX/FC"],["hold","HOLD"],["mm","MAX/MIN"]];
+  if(!it.autoR) keys.push(["range","RANGE"]);
+  if(it.lampSel) keys.push(["src","FONTE"]);
+  if(it.mem) keys.push(["mem","MEM"]);
+  return `<div class="meter ${it.cls}">
+    <div class="mtop"><b>${it.nome}</b><span>Luxímetro digital</span></div>
+    <div class="lcd" id="lcd"><div class="ann">${ann.map(a=>`<span data-ann="${a}">${a}</span>`).join("")}</div><div class="digits">&nbsp;</div><div class="bar"><i></i></div></div>
+    <div class="keys">${keys.map(([k,l])=>`<button class="key ${k==="pwr"?"pwr":""}" data-key="${k}">${l}</button>`).join("")}</div>
+    <div class="photocell"><span class="dome"></span><span>Fotocélula ${S.inst==="LD400"?"em cabo espiral":"destacável"} · ${S.at?`posicionada no ponto <b>${esc(S.at)}</b>`:"clique em um ponto da planta para posicioná-la"}</span></div>
+    <div class="disclaim">Representação esquemática para fins didáticos; não reproduz o painel real do aparelho.</div>
+  </div>`;
+}
+function onKey(k){
+  const M=S.meter, it=INSTR[S.inst];
+  if(k==="pwr"){ M.on=!M.on; if(M.on){ M.powerAt=performance.now(); M.acqClean=0; M.hold=false; M.mm=0; } else { M.hold=false; M.mm=0; } }
+  if(!M.on){ drawLCD(); return; }
+  if(k==="unit") M.unit = M.unit==="lux"?"fc":"lux";
+  if(k==="hold"){ M.hold=!M.hold; if(M.hold){ M.holdVal=shownLux(); M.holdPt=S.at; M.holdStable=M.stable; } }
+  if(k==="mm"){ const maxMode = S.inst==="LD550"?3:2; M.mm = (M.mm+1)%(maxMode+1); M.mmMax=M.mmMin=null; M.mmSum=0; M.mmN=0; }
+  if(k==="range"){ M.rIdx=(M.rIdx+1)%it.ranges.length; }
+  if(k==="src"){ const i=it.sel.indexOf(M.sel); M.sel=it.sel[(i+1)%it.sel.length]; }
+  if(k==="mem"){ const v=shownLux(); if(v!=null && it.mem){ const d=displayValue(v); if(d.num!=null){ M.mem.push(`${String(M.mem.length+1).padStart(2,"0")}  ${S.at||"--"}  ${d.txt} ${M.unit}`); if(M.mem.length>99) M.mem.shift(); const ml=$("#memList"); if(ml) ml.innerHTML=M.mem.slice().reverse().join("<br>"); } } }
+  drawLCD();
+}
+function registrar(){
+  const M=S.meter, box=$("#regMsg");
+  const say=(cls,t)=>{ box.className="msg "+cls; box.innerHTML=t; box.hidden=false; };
+  if(!S.at) return say("warn","Clique em um ponto da planta para posicionar a fotocélula.");
+  if(!M.on) return say("warn","Ligue o aparelho (tecla POWER).");
+  if(M.unit!=="lux") return say("warn","A NHO 11 expressa a iluminância em lux. Mude a unidade com a tecla LUX/FC antes de anotar.");
+  if(M.mm) return say("warn","O display está mostrando MAX/MIN/AVG. Para a leitura pontual, saia dessa função (tecla MAX/MIN até apagar o indicador).");
+  if(M.hold && M.holdPt!==S.at) return say("bad","O valor congelado (HOLD) foi obtido em outro ponto. Libere o HOLD e faça a leitura neste ponto.");
+  const v=shownLux(); const d=displayValue(v);
+  if(d.num==null) return say("bad","Leitura fora da escala. Ajuste a faixa de medição com a tecla RANGE.");
+  const pt=getPt(S.at);
+  const stable = M.hold ? M.holdStable : M.stable;
+  const coarse = d.res && d.num>0 && d.res/d.num>.02;
+  const posOk = pt.kind==="grid" ? S.pos==="h075" : S.pos==="tarefa";
+  const r={v:d.num, stable, coarse, pos:S.pos, posOk, cond:S.cond, post:S.post, roupa:S.roupa, sel: INSTR[S.inst].lampSel?M.sel:"PAD", inst:S.inst, ideal: idealAt(pt)};
+  S.rec[pt.id]=r;
+  say(stable&&!coarse?"ok":"warn",`Ponto <b>${esc(pt.id)}</b> registrado: <b class="mono">${d.txt} lux</b>.${stable?"":" Atenção: a leitura ainda não estava estabilizada."}${coarse?" Atenção: a faixa escolhida tem resolução grosseira para este valor.":""}`);
+  refreshBench();
+  render._skip = true;
+  updateChips();
+}
+function updateChips(){ const p=progress(); const c=$("#statusChips"); if(c){ const chips=c.querySelectorAll(".chip b.mono"); if(chips[0]) chips[0].textContent=`${p.g+p.t+p.e}/${p.gt+p.tt+p.et}`; }
+  const st=$("#steps"); if(st) st.querySelectorAll(".st").forEach((s,i)=>s.classList.toggle("done",stepDone(i))); }
+function tablesHTML(){
+  const sn=S.scene, r=S.rec;
+  const row=p=>{ const x=r[p.id]; return `<tr><td class="mono">${esc(p.kind==="ent"?p.id:p.id)}</td><td>${p.kind==="grid"?({r:"R",q:"Q",t:"T",p:"P"})[p.grp]:p.kind==="task"?esc(p.nome):`Entorno de ${p.task}`}</td><td class="num">${x?fmt(x.v, x.v<100?1:0):"—"}</td><td>${x?flagPills(x,p):""}</td><td>${x?`<button class="btn small" data-del="${p.id}">Apagar</button>`:""}</td></tr>`; };
+  return `<div class="grid2">
+   <div><h3 style="margin-bottom:6px">Malha do Anexo 1</h3>${S.caseOk?`<div class="tbl-wrap"><table><thead><tr><th>Ponto</th><th>Grupo</th><th class="num">lux</th><th>Observações</th><th></th></tr></thead><tbody>${sn.pts.map(row).join("")}</tbody></table></div>`:`<div class="msg warn">Confirme a configuração do Anexo 1 na etapa 2 para liberar a malha de pontos.</div>`}</div>
+   <div><h3 style="margin-bottom:6px">Áreas de tarefa e entorno imediato</h3><div class="tbl-wrap"><table><thead><tr><th>Ponto</th><th>Local</th><th class="num">lux</th><th>Observações</th><th></th></tr></thead><tbody>${sn.tasks.map(row).join("")}${sn.ents.map(row).join("")}</tbody></table></div></div>
+  </div>`;
+}
+function flagPills(x,p){
+  const f=[];
+  if(!x.stable) f.push(`<span class="pill warn">não estabilizada</span>`);
+  if(!x.posOk) f.push(`<span class="pill bad">plano incorreto</span>`);
+  if(x.coarse) f.push(`<span class="pill warn">resolução baixa</span>`);
+  if(S.scen.janelas.length && (x.cond==="sol_aberta"||x.cond==="sol_fechada")) f.push(`<span class="pill warn">luz natural</span>`);
+  if(S.scen.noturno && x.cond!=="noite") f.push(`<span class="pill bad">fora do período noturno</span>`);
+  if(x.post==="inclinado") f.push(`<span class="pill warn">sombra do avaliador</span>`);
+  return f.join(" ")||`<span class="pill ok">ok</span>`;
+}
+function refreshBench(){
+  const pw=$("#planBox"); if(pw){ pw.innerHTML=planSVG({points:true}); wirePlan(); }
+  const tb=$("#tables"); if(tb){ tb.innerHTML=tablesHTML(); wireTables(); }
+  const pc=$(".photocell span:last-child"); if(pc) pc.innerHTML = S.at?`Fotocélula posicionada no ponto <b>${esc(S.at)}</b>`:"Clique em um ponto da planta para posicionar a fotocélula";
+  const w=$("#whereTxt"); if(w) w.innerHTML = whereTxt();
+}
+function whereTxt(){
+  if(!S.at) return "Nenhum ponto selecionado.";
+  const p=getPt(S.at);
+  if(p.kind==="grid") return `Ponto <b>${p.id}</b> da malha do Anexo 1 (grupo ${({r:"R",q:"Q",t:"T",p:"P"})[p.grp]}) – plano horizontal de referência a 0,75 m.`;
+  if(p.kind==="task") return `Área de tarefa <b>${p.id}</b>: ${esc(p.nome)} – plano ${p.pl==="H"?"horizontal":p.pl==="V"?"vertical":"inclinado"} a ${fmt(p.z,2)} m.`;
+  return `Entorno imediato <b>${p.id}</b> da tarefa ${p.task}, a 0,6 m da área da tarefa.`;
+}
+function wirePlan(){
+  document.querySelectorAll("#planBox [data-pt]").forEach(g=>{
+    const f=()=>{ S.at=g.dataset.pt; if(S.meter.hold && S.meter.holdPt!==S.at){} refreshBench(); };
+    g.onclick=f; g.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); f(); } };
+  });
+}
+function wireTables(){ document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{ delete S.rec[b.dataset.del]; refreshBench(); updateChips(); }); }
+function vMedicao(v){
+  const sc=S.scen;
+  if(!S.inst){ v.innerHTML=`<div><div class="eyebrow">Etapa 5</div><h2>Medição</h2></div><div class="msg warn">Escolha o instrumento na etapa 3 antes de medir.</div>`; return; }
+  const condOpts = Object.entries(COND).filter(([k])=> sc.janelas.length || k==="noite" || !sc.noturno).map(([k,c])=>`<option value="${k}" ${S.cond===k?"selected":""}>${c.n}</option>`).join("");
+  v.innerHTML = `<div><div class="eyebrow">Etapa 5</div><h2>Medição ponto a ponto</h2></div>
+   <p class="lead">Clique em um ponto da planta para posicionar a fotocélula, ajuste as condições de medição, espere a leitura estabilizar e registre. Meça todos os pontos da malha (círculos), as áreas de tarefa (losangos) e o entorno imediato das tarefas com iluminação suplementar (círculos tracejados).</p>
+   <div class="bench">
+     <div class="plan-wrap"><div id="planBox">${planSVG({points:true})}</div>
+       <div class="legend"><span><i style="background:var(--g-r)"></i>R</span><span><i style="background:var(--g-q)"></i>Q</span><span><i style="background:var(--g-t)"></i>T</span><span><i style="background:var(--g-p)"></i>P</span><span><i style="background:var(--g-task)"></i>Área de tarefa</span><span><i style="background:var(--g-ent)"></i>Entorno imediato</span><span><i style="background:var(--window)"></i>Janela</span><span><i style="background:var(--accent)"></i>Luminária</span></div>
+     </div>
+     <div class="meter-col">
+       ${meterHTML()}
+       <div class="card ctrls">
+         <p class="where" id="whereTxt">${whereTxt()}</p>
+         <div class="row">
+           <label class="f">Posição da fotocélula<select id="posSel">${Object.entries(POS).map(([k,p])=>`<option value="${k}" ${S.pos===k?"selected":""}>${p.n}</option>`).join("")}</select></label>
+         </div>
+         <div class="row">
+           <label class="f">Iluminação natural / período<select id="condSel">${condOpts}</select></label>
+           <label class="f">Postura do avaliador<select id="postSel"><option value="afastado" ${S.post==="afastado"?"selected":""}>Afastado, sem sombrear a fotocélula</option><option value="inclinado" ${S.post==="inclinado"?"selected":""}>Inclinado sobre a fotocélula para ler o display</option></select></label>
+         </div>
+         <div class="row"><button class="btn primary" id="regBtn">Registrar leitura na planilha de campo</button></div>
+         <div id="regMsg" class="msg" hidden></div>
+         ${INSTR[S.inst].mem?`<details><summary class="note">Memória interna do aparelho</summary><div class="memlist" id="memList">${S.meter.mem.slice().reverse().join("<br>")||"vazia"}</div></details>`:""}
+       </div>
+     </div>
+   </div>
+   <div id="tables">${tablesHTML()}</div>
+   ${progress().all?nextBtn("Ver resultados e relatório"):""}`;
+  wirePlan(); wireTables();
+  v.querySelectorAll("[data-key]").forEach(b=>b.onclick=()=>onKey(b.dataset.key));
+  $("#posSel").onchange=e=>{ S.pos=e.target.value; };
+  $("#condSel").onchange=e=>{ S.cond=e.target.value; };
+  $("#postSel").onchange=e=>{ S.post=e.target.value; };
+  $("#regBtn").onclick=()=>{ registrar(); if(progress().all && !v.querySelector("[data-next]")){ v.insertAdjacentHTML("beforeend", nextBtn("Ver resultados e relatório")); wireNext(v); } };
+  wireNext(v);
+  drawLCD();
+}
+setInterval(meterTick, 400);
+</script>
+<script>
+"use strict";
+/* ============================================================
+   ABA 6 – RESULTADOS E RELATÓRIO
+   ============================================================ */
+const avg = a => a.length ? a.reduce((s,x)=>s+x,0)/a.length : NaN;
+function mediaAnexo1(valOf){
+  const sc=S.scen, sn=S.scene;
+  const g = k => avg(sn.pts.filter(p=>p.grp===k).map(p=>valOf(p)).filter(v=>v!=null));
+  const R=g("r"), Q=g("q"), T=g("t"), P=g("p"), N=sc.N, M=sc.M, L=sc.L, W=sc.W;
+  const f1=v=>fmt(v,2);
+  let I, gen, sub;
+  switch(sc.caso){
+    case 1: I=(R*(N-1)*(M-1)+Q*(N-1)+T*(M-1)+P)/(N*M);
+      gen="Ī = [R(N−1)(M−1) + Q(N−1) + T(M−1) + P] / (N·M)";
+      sub=`Ī = [${f1(R)}·(${N}−1)·(${M}−1) + ${f1(Q)}·(${N}−1) + ${f1(T)}·(${M}−1) + ${f1(P)}] / (${N}·${M})`; break;
+    case 2: I=P; gen="Ī = P = (p1 + p2 + p3 + p4) / 4"; sub=`Ī = ${f1(P)}`; break;
+    case 3: I=(Q*(N-1)+P)/N; gen="Ī = [Q(N−1) + P] / N"; sub=`Ī = [${f1(Q)}·(${N}−1) + ${f1(P)}] / ${N}`; break;
+    case 4: I=(R*N*(M-1)+Q*N+T*(M-1)+P)/(M*(N+1)); gen="Ī = [R·N(M−1) + Q·N + T(M−1) + P] / [M(N+1)]";
+      sub=`Ī = [${f1(R)}·${N}·(${M}−1) + ${f1(Q)}·${N} + ${f1(T)}·(${M}−1) + ${f1(P)}] / [${M}·(${N}+1)]`; break;
+    case 5: I=(Q*N+P)/(N+1); gen="Ī = (Q·N + P) / (N + 1)"; sub=`Ī = (${f1(Q)}·${N} + ${f1(P)}) / (${N} + 1)`; break;
+    case 6: I=(R*(L-8)*(W-8)+8*Q*(L-8)+8*T*(W-8)+64*P)/(W*L); gen="Ī = [R(L−8)(W−8) + 8Q(L−8) + 8T(W−8) + 64P] / (W·L)";
+      sub=`Ī = [${f1(R)}·(${fmt(L,1)}−8)·(${fmt(W,1)}−8) + 8·${f1(Q)}·(${fmt(L,1)}−8) + 8·${f1(T)}·(${fmt(W,1)}−8) + 64·${f1(P)}] / (${fmt(W,1)}·${fmt(L,1)})`; break;
+  }
+  return {I,R,Q,T,P,gen,sub};
+}
+function eReq(t){
+  const key = S.quadroSel[t.id] || t.q; const q=QUADRO[key];
+  let i=ESCALA.indexOf(q.E); const aj = S.ajusteSel==null||S.ajusteSel==="" ? 0 : +S.ajusteSel;
+  let E = ESCALA[clamp(i+aj,0,ESCALA.length-1)];
+  let cont=false; if(E<200){ E=200; cont=true; }
+  return {E, q, key, cont, base:q.E, aj};
+}
+function tabela1(E){ return E>=750?500 : E>=500?300 : E>=300?200 : E; }
+function evaluate(){
+  const sc=S.scen, sn=S.scene, r=S.rec;
+  const med = mediaAnexo1(p=>r[p.id]?r[p.id].v:null);
+  const ref = mediaAnexo1(p=>idealAt(p));
+  const I=med.I;
+  const tasks = sn.tasks.map(t=>{
+    const v=r[t.id].v, e=eReq(t);
+    const c1 = v>=.9*e.E, c2 = v>=.7*I, c3 = v>=200;
+    const irc = sc.lamp.IRC>=e.q.IRC, tcp = e.q.tcp ? sc.lamp.Tcp>=e.q.tcp : true;
+    return {t, v, e, c1, c2, c3, irc, tcp, ok: c1&&c2&&c3};
+  });
+  const vmax = Math.max(...tasks.map(x=>x.v));
+  const ratio = vmax/I, ratioNA = vmax>2500, ratioOk = ratioNA || ratio<=5;
+  const ents = sn.tasks.filter(t=>t.supl).map(t=>{
+    const e=eReq(t), req=tabela1(e.E); const vals=sn.ents.filter(x=>x.task===t.id).map(x=>({id:x.id, v:r[x.id].v}));
+    return {t, req, vals, ok: vals.every(x=>x.v>=req), min: Math.min(...vals.map(x=>x.v))};
+  });
+  let adj=null; if(sc.adj){ const ra=Math.max(I,sc.adj.media)/Math.min(I,sc.adj.media); adj={...sc.adj, ratio:ra, ok:ra<=5}; }
+  // não conformidades de procedimento
+  const recs = Object.values(r); const flags=[];
+  const instBad = recs.some(x=>x.inst==="LD400") && sc.lamp.tipo==="LED";
+  if(instBad) flags.push({s:"bad", t:"O LD-400 não é especificado pelo fabricante para fontes LED. O instrumento não atende ao item 6.3.1 neste ambiente e os resultados não podem ser aceitos."});
+  const selBad = recs.filter(x=>INSTR[x.inst].lampSel && x.sel!==sc.lamp.tipo).length;
+  if(selBad) flags.push({s:"bad", t:`${selBad} leitura(s) feitas com o seletor de fonte de luz diferente do tipo de lâmpada do ambiente (${LAMP_LABEL[sc.lamp.tipo]}). O fator de correção espectral ficou errado (item 6.3.1).`});
+  const instUsed=[...new Set(recs.map(x=>x.inst))];
+  if(instUsed.some(k=>S.v.certExp===k)) flags.push({s:"bad", t:"Medições feitas com instrumento de certificado de calibração vencido (item 6.3.2)."});
+  if(instUsed.length>1) flags.push({s:"warn", t:`Foram usados ${instUsed.length} instrumentos diferentes na mesma avaliação (${instUsed.map(k=>INSTR[k].nome).join(", ")}).`});
+  const unst = recs.filter(x=>!x.stable).length; if(unst) flags.push({s:"warn", t:`${unst} leitura(s) registradas antes da estabilização do medidor (item 6.4).`});
+  const gridPos = sn.pts.filter(p=>r[p.id] && !r[p.id].posOk).length; if(gridPos) flags.push({s:"bad", t:`${gridPos} ponto(s) da malha não foram medidos em plano horizontal a 0,75 m do piso (Anexo 1).`});
+  const taskPos = [...sn.tasks,...sn.ents].filter(p=>r[p.id] && !r[p.id].posOk).length; if(taskPos) flags.push({s:"bad", t:`${taskPos} ponto(s) de tarefa/entorno não foram medidos no plano da tarefa visual (item 6.4).`});
+  if(sc.janelas.length){ const dl=recs.filter(x=>x.cond==="sol_aberta"||x.cond==="sol_fechada").length; if(dl) flags.push({s:"bad", t:`${dl} leitura(s) com interferência de luz natural. As medições devem ser feitas na condição mais desfavorável, com o iluminamento dependendo só das fontes instaladas (item 6.2).`}); }
+  if(sc.noturno){ const nn=recs.filter(x=>x.cond!=="noite").length; if(nn) flags.push({s:"bad", t:`${nn} leitura(s) fora do período noturno, embora a atividade ocorra à noite (item 6.2).`}); }
+  const sh=recs.filter(x=>x.post==="inclinado").length; if(sh) flags.push({s:"warn", t:`${sh} leitura(s) com o avaliador inclinado sobre a fotocélula, projetando sombra (item 6.2).`});
+  if(recs.some(x=>x.roupa==="clara")) flags.push({s:"warn", t:"O avaliador usou roupa clara, que pode refletir luz sobre a fotocélula (item 6.2)."});
+  const coarse=recs.filter(x=>x.coarse).length; if(coarse) flags.push({s:"warn", t:`${coarse} leitura(s) em faixa de medição com resolução inadequada ao valor medido.`});
+  // enquadramento
+  const enq=[];
+  sn.tasks.forEach(t=>{ const s=S.quadroSel[t.id]; if(!s) enq.push(`${t.nome}: atividade do Quadro 1 não selecionada (usado o enquadramento de referência).`); else if(s!==t.q) enq.push(`${t.nome}: enquadrado como “${QUADRO[s].n}”; o esperado é “${QUADRO[t.q].n}”.`); });
+  if((+S.ajusteSel||0)!==sc.ajuste) enq.push(sc.ajuste?`O ajuste da escala de iluminância (item 5.1) não foi aplicado: ${sc.ajusteNota}.`:"Foi aplicado ajuste na escala de iluminância sem condição que o justifique.");
+  return {med, ref, I, tasks, vmax, ratio, ratioNA, ratioOk, ents, adj, flags, enq, instBad};
+}
+function yes(ok, na){ return na ? `<span class="pill na">não se aplica</span>` : `<span class="pill ${ok?"ok":"bad"}">${ok?"Atende":"Não atende"}</span>`; }
+function findings(ev){
+  const sc=S.scen, tr=truth(), f=[];
+  if(ev.tasks.some(x=>!x.ok) || ev.ents.some(x=>!x.ok)) f.push("insuf");
+  if(S.v.burned>=0 || (ev.med.P < .5*ev.I)) f.push("irreg");
+  if(tr.a8==="N") f.push("estrob");
+  if(tr.a9==="N") f.push("cint");
+  if(tr.a11==="N") f.push("ofusc");
+  if(sc.luznat) f.push("luznat");
+  if(ev.tasks.some(x=>!x.irc||!x.tcp)) f.push("cor");
+  return f;
+}
+function vResultados(v){
+  const sc=S.scen, sn=S.scene, p=progress();
+  if(!p.all){
+    const miss=[]; if(!S.caseOk) miss.push("confirmar a configuração do Anexo 1 (etapa 2)");
+    if(p.g<p.gt) miss.push(`medir ${p.gt-p.g} ponto(s) da malha`); if(p.t<p.tt) miss.push(`medir ${p.tt-p.t} área(s) de tarefa`); if(p.e<p.et) miss.push(`medir ${p.et-p.e} ponto(s) de entorno imediato`);
+    v.innerHTML=`<div><div class="eyebrow">Etapa 6</div><h2>Resultados e relatório</h2></div><div class="msg warn">Para gerar os resultados, falta ${miss.join("; ")}.</div><div class="row"><button class="btn" id="goMed">Voltar para a medição</button></div>`;
+    $("#goMed").onclick=()=>{ S.tab=4; render(); }; return;
+  }
+  const ev=evaluate(), m=ev.med, I=ev.I;
+  const fd=findings(ev);
+  const tr=truth(), prelimHits = Object.keys(tr).filter(k=>S.prelim[k]===tr[k]).length, prelimTot=Object.keys(tr).length;
+  const instNames=[...new Set(Object.values(S.rec).map(x=>x.inst))].map(k=>INSTR[k]);
+  const k0=instNames[0] ? Object.keys(INSTR).find(k=>INSTR[k]===instNames[0]) : S.inst;
+  const allTaskOk = ev.tasks.every(x=>x.ok) && ev.ents.every(x=>x.ok) && ev.ratioOk && (!ev.adj||ev.adj.ok);
+  const valido = !ev.flags.some(f=>f.s==="bad");
+  const devRef = (I-ev.ref.I)/ev.ref.I*100;
+
+  const taskRows = ev.tasks.map(x=>`<tr><td>${esc(x.t.nome)}</td><td>${esc(x.e.q.n)}${x.e.aj?` <span class="pill warn">${x.e.aj>0?"+":"−"}1 nível</span>`:""}${x.e.cont?` <span class="pill warn">tarefa contínua</span>`:""}</td><td class="num">${fmt(x.e.E)}</td><td class="num">${fmt(.9*x.e.E)}</td><td class="num">${fmt(x.v)}</td><td>${yes(x.c1)}</td><td>${yes(x.c2)}</td><td>${yes(x.irc&&x.tcp)}</td></tr>`).join("");
+  const entRows = ev.ents.map(x=>`<tr><td>${esc(x.t.nome)}</td><td class="num">${fmt(eReq(x.t).E)}</td><td class="num">${fmt(x.req)}</td><td class="mono">${x.vals.map(y=>`${y.id}: ${fmt(y.v)}`).join(" · ")}</td><td>${yes(x.ok)}</td></tr>`).join("");
+  const gridRows = sn.pts.map(p=>`<tr><td class="mono">${p.id}</td><td class="num">${fmt(S.rec[p.id].v, S.rec[p.id].v<100?1:0)}</td></tr>`).join("");
+  const cAp = aparencia(sc.lamp.Tcp);
+  const nome = S.avaliador || "__________________";
+  const it=INSTR[k0];
+  const recA2 = fd.map(k=>`<li><b>${esc(A2[k].t)}:</b> ${A2[k].r.map(esc).join("; ")}.</li>`).join("");
+
+  v.innerHTML = `<div><div class="eyebrow">Etapa 6</div><h2>Resultados e relatório</h2></div>
+   <div class="kpis">
+     <div class="kpi"><span>Iluminância média Ī</span><b>${fmt(I,1)} lux</b></div>
+     <div class="kpi"><span>70% de Ī</span><b>${fmt(.7*I,0)} lux</b></div>
+     <div class="kpi"><span>Maior valor na tarefa</span><b>${fmt(ev.vmax,0)} lux</b></div>
+     <div class="kpi"><span>Razão máx./Ī</span><b>${ev.ratioNA?"n/a":fmt(ev.ratio,2)+" : 1"}</b></div>
+     <div class="kpi"><span>Situação geral</span><b style="font-family:var(--f-display);font-size:1.25rem">${!valido?`<span class="pill bad">Avaliação inválida</span>`:allTaskOk?`<span class="pill ok">Atende</span>`:`<span class="pill bad">Não atende</span>`}</b></div>
+   </div>
+   <div class="card" style="display:grid;gap:10px">
+     <h3>Cálculo da iluminância média – caso ${sc.caso} do Anexo 1</h3>
+     <p class="note">${[["R",m.R],["Q",m.Q],["T",m.T],["P",m.P]].filter(x=>!isNaN(x[1])).map(x=>`${x[0]} = ${fmt(x[1],2)} lux`).join(" · ")}${sc.N?` · N = ${sc.N}`:""}${sc.M?` · M = ${sc.M}`:""}${sc.caso===6?` · L = ${fmt(sc.L,1)} m · W = ${fmt(sc.W,1)} m`:""}</p>
+     <div class="formula">${esc(m.gen)}\n${esc(m.sub)}\nĪ = ${fmt(I,1)} lux</div>
+   </div>
+   <div class="card" style="display:grid;gap:10px">
+     <h3>Áreas de tarefa (item 5)</h3>
+     <div class="tbl-wrap"><table><thead><tr><th>Tarefa</th><th>Quadro 1</th><th class="num">E (lux)</th><th class="num">E − 10%</th><th class="num">Medido</th><th>≥ E − 10%</th><th>≥ 70% Ī</th><th>IRC / Tcp</th></tr></thead><tbody>${taskRows}</tbody></table></div>
+     <p class="note">Lâmpada: IRC ${sc.lamp.IRC}, Tcp ${fmt(sc.lamp.Tcp)} K (aparência ${cAp.toLowerCase()}). Razão entre o maior valor na tarefa e Ī: ${ev.ratioNA?"não se aplica (tarefa acima de 2.500 lux)":`${fmt(ev.ratio,2)} : 1 – ${ev.ratioOk?"atende":"não atende"} ao limite de 5:1`}.${ev.adj?` Razão entre médias de áreas adjacentes (${esc(ev.adj.nome)}, ${fmt(ev.adj.media)} lux): ${fmt(ev.adj.ratio,2)} : 1 – ${ev.adj.ok?"atende":"não atende"}.`:""}</p>
+     ${ev.ents.length?`<h3>Entorno imediato com iluminação suplementar (Tabela 1)</h3><div class="tbl-wrap"><table><thead><tr><th>Tarefa</th><th class="num">E tarefa</th><th class="num">Entorno mín.</th><th>Leituras</th><th>Situação</th></tr></thead><tbody>${entRows}</tbody></table></div>`:""}
+   </div>
+   <div class="grid2">
+     <div class="card" style="display:grid;gap:8px;align-content:start"><h3>Não conformidades de procedimento</h3>${ev.flags.length?ev.flags.map(f=>`<div class="msg ${f.s}">${esc(f.t)}</div>`).join(""):`<div class="msg ok">Nenhuma não conformidade de procedimento foi detectada.</div>`}${ev.enq.length?`<h3 style="margin-top:6px">Enquadramento</h3>${ev.enq.map(t=>`<div class="msg warn">${esc(t)}</div>`).join("")}`:""}</div>
+     <div class="card" style="display:grid;gap:8px;align-content:start"><h3>Conferência do professor</h3>
+       <p>Ī de referência (procedimento correto, sem erros instrumentais): <b class="mono">${fmt(ev.ref.I,1)} lux</b>${sc.id==="reuniao"?" – valor do Anexo 4: 494,2 lux":""}.</p>
+       <p>Diferença da média obtida pelo aluno: <b class="mono">${devRef>=0?"+":""}${fmt(devRef,1)}%</b> <span class="pill ${Math.abs(devRef)<=5?"ok":Math.abs(devRef)<=10?"warn":"bad"}">${Math.abs(devRef)<=5?"dentro de 5%":Math.abs(devRef)<=10?"entre 5% e 10%":"acima de 10%"}</span></p>
+       <p>Avaliação preliminar: ${S.prelimChecked?`<b>${prelimHits} de ${prelimTot}</b> itens com evidência respondidos de forma coerente`:"não conferida"}; aparência da cor: ${S.corSel?(S.corSel===cAp?"correta":"incorreta"):"não respondida"}.</p>
+       <p class="note">Condição sorteada: fator de manutenção ${fmt(S.v.maint,2)}${S.v.burned>=0?", uma luminária apagada":""}${S.v.certExp?`, certificado do ${INSTR[S.v.certExp].nome} vencido`:""}.</p>
+     </div>
+   </div>
+   <div class="row"><label class="f">Nome do avaliador (para o relatório)<input type="text" id="avalNome" value="${esc(S.avaliador)}" style="min-width:260px"></label><button class="btn primary" id="copyRep">Copiar relatório</button><span class="note" id="copyMsg"></span></div>
+   <article class="report" id="report">
+     <div class="eyebrow">Relatório técnico · NHO 11 – item 8</div>
+     <h2>Avaliação dos níveis de iluminamento – ${esc(sc.nome)}</h2>
+     <p class="note">${esc(sc.setor)} · Avaliador: ${esc(nome)} · Data: ${dateBR(TODAY)}</p>
+     <h3>1. Introdução</h3>
+     <p>Este relatório apresenta a avaliação dos níveis de iluminamento do ambiente “${esc(sc.nome)}”, com o objetivo de verificar o atendimento aos níveis mínimos de iluminamento e aos critérios da NHO 11 da Fundacentro. A avaliação se justifica pela realização de tarefas visuais contínuas no local e pela necessidade de subsidiar o gerenciamento de riscos ocupacionais. As medições foram realizadas em ${dateBR(TODAY)}, na condição: ${esc(COND[Object.values(S.rec)[0].cond].n.toLowerCase())}.</p>
+     <h3>2. Instrumental e acessórios</h3>
+     <p>Luxímetro digital Instrutherm ${instNames.map(i=>i.nome).join(" e ")} – ${esc(it.sub.toLowerCase())}. Certificado de calibração nº ${S.v.certN[k0]}, emitido em ${dateBR(S.v.certDate[k0])}${S.v.certExp===k0?" (vencido na data das medições)":", válido na data das medições"}. Seleção de fonte de luz utilizada: ${it.lampSel?LAMP_LABEL[Object.values(S.rec)[0].sel]:"não disponível no modelo (calibração com lâmpada padrão de 2.856 K)"}.</p>
+     <h3>3. Critérios e procedimentos</h3>
+     <p>Critério: medição ponto a ponto nas áreas de tarefa e comparação com o nível mínimo de iluminamento E do Quadro 1 da NHO 11, com tolerância de 10%; iluminância da tarefa não inferior a 70% da iluminância média do ambiente; mínimo de 200 lux em tarefas contínuas; razão máxima de 5:1 entre o maior valor da tarefa e a média${ev.ents.length?"; entorno imediato conforme a Tabela 1":""}. A iluminância média foi determinada pelo caso ${sc.caso} do Anexo 1 (${esc(CASOS[sc.caso].replace(/ \(Figura A\d\)/,"").toLowerCase())}), com a fotocélula em plano horizontal a 0,75 m do piso; nas áreas de tarefa, a fotocélula foi posicionada no plano da tarefa visual.</p>
+     <h3>4. Descrição do ambiente e do sistema de iluminação</h3>
+     <p>${esc(sc.desc)} Dimensões: ${fmt(sc.L,1)} × ${fmt(sc.W,1)} m, luminárias a ${fmt(sc.H,1)} m do piso. Sistema: ${esc(sc.lamp.desc)}; IRC ${sc.lamp.IRC}; Tcp ${fmt(sc.lamp.Tcp)} K (aparência ${cAp.toLowerCase()}, conforme o Quadro A1).</p>
+     <h3>5. Dados obtidos</h3>
+     <p><b>Avaliação preliminar (item 6.1):</b></p>
+     <ul>${dynObs().map(o=>`<li>${esc(o)}</li>`).join("")}</ul>
+     <p><b>Malha do Anexo 1 (lux):</b></p>
+     <div class="tbl-wrap" style="max-width:420px"><table><thead><tr><th>Ponto</th><th class="num">lux</th></tr></thead><tbody>${gridRows}</tbody></table></div>
+     <div class="formula">${esc(m.sub)}\nĪ = ${fmt(I,1)} lux    70% de Ī = ${fmt(.7*I,0)} lux</div>
+     <p><b>Áreas de tarefa:</b></p>
+     <div class="tbl-wrap"><table><thead><tr><th>Tarefa</th><th class="num">E (lux)</th><th class="num">Medido (lux)</th><th>Situação</th></tr></thead><tbody>${ev.tasks.map(x=>`<tr><td>${esc(x.t.nome)}</td><td class="num">${fmt(x.e.E)}</td><td class="num">${fmt(x.v)}</td><td>${yes(x.ok)}</td></tr>`).join("")}${ev.ents.map(x=>`<tr><td>Entorno imediato – ${esc(x.t.nome)}</td><td class="num">${fmt(x.req)}</td><td class="num">mín. ${fmt(x.min)}</td><td>${yes(x.ok)}</td></tr>`).join("")}</tbody></table></div>
+     <h3>6. Interpretação dos resultados</h3>
+     <ul>
+       ${ev.tasks.map(x=>`<li>${esc(x.t.nome)}: ${fmt(x.v)} lux para E = ${fmt(x.e.E)} lux (${esc(x.e.q.n)}). ${x.c1?"Atende ao nível mínimo, considerada a tolerância de 10%":"Não atende ao nível mínimo, mesmo com a tolerância de 10%"}; ${x.c2?"atende":"não atende"} à regra dos 70% da média. ${x.irc?"":`O IRC da lâmpada (${sc.lamp.IRC}) é inferior ao indicado no Quadro 1 (${x.e.q.IRC}). `}${x.tcp?"":`A Tcp da lâmpada (${fmt(sc.lamp.Tcp)} K) é inferior ao mínimo de ${fmt(x.e.q.tcp)} K. `}</li>`).join("")}
+       <li>Razão entre o maior valor na tarefa e a média: ${ev.ratioNA?"não se aplica (acima de 2.500 lux)":`${fmt(ev.ratio,2)} : 1, ${ev.ratioOk?"dentro":"acima"} do limite de 5:1`}.</li>
+       ${ev.ents.map(x=>`<li>Entorno imediato de ${esc(x.t.nome.toLowerCase())}: mínimo medido de ${fmt(x.min)} lux para ${fmt(x.req)} lux exigidos pela Tabela 1 – ${x.ok?"atende":"não atende"}.</li>`).join("")}
+       ${ev.adj?`<li>Razão entre a média do ambiente e a da área adjacente (${esc(ev.adj.nome.toLowerCase())}): ${fmt(ev.adj.ratio,2)} : 1 – ${ev.adj.ok?"atende":"não atende"} ao limite de 5:1.</li>`:""}
+       <li><b>Conclusão:</b> ${!valido?"a avaliação apresenta não conformidades de procedimento que comprometem a validade dos resultados (ver item 7); recomenda-se repetir as medições.":allTaskOk?"o ambiente atende aos critérios quantitativos da NHO 11.":"o ambiente não atende a todos os critérios quantitativos da NHO 11."}</li>
+     </ul>
+     ${recA2?`<p><b>Recomendações (Quadro A2):</b></p><ul>${recA2}</ul>`:""}
+     <h3>7. Informações complementares</h3>
+     ${ev.flags.length||ev.enq.length?`<ul>${ev.flags.map(f=>`<li>${esc(f.t)}</li>`).join("")}${ev.enq.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:"<p>Não houve circunstâncias específicas que tenham interferido na avaliação.</p>"}
+     <p class="note" style="margin-top:14px">Documento gerado no Laboratório de Iluminação (simulação didática). Valores obtidos em ambiente virtual.</p>
+   </article>
+   <div class="row"><button class="btn" id="newRun">Recomeçar este cenário com nova condição de campo</button></div>`;
+  $("#avalNome").oninput=e=>{ S.avaliador=e.target.value; };
+  $("#avalNome").onchange=()=>render();
+  $("#copyRep").onclick=()=>{
+    const el=$("#report"), txt=el.innerText, msg=$("#copyMsg");
+    const fallback=()=>{ const rg=document.createRange(); rg.selectNodeContents(el); const s=getSelection(); s.removeAllRanges(); s.addRange(rg); msg.textContent="Texto selecionado: use Ctrl+C para copiar."; };
+    try{ navigator.clipboard.writeText(txt).then(()=>{ msg.textContent="Relatório copiado."; }, fallback); } catch(e){ fallback(); }
+  };
+  $("#newRun").onclick=()=>{ reroll(); S.tab=0; render(); };
+}
+
+/* ============================================================
+   INICIALIZAÇÃO
+   ============================================================ */
+$("#glosSearch").oninput=renderGloss;
+renderGloss();
+selectScenario("reuniao");
+</script>
